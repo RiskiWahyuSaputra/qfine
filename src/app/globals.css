@@ -540,3 +540,82 @@ html {
     user-select: text;
   }
 }
+
+/* ══════════════════════════════════════════════════════════
+   Transisi antar halaman (React <ViewTransition> di AppShell, arah dari lib/navigasi.ts).
+   Topbar, sidebar & bottom nav ditahan diam; hanya konten yang bergeser.
+   ══════════════════════════════════════════════════════════ */
+::view-transition { pointer-events: none; }
+
+/* Konten (main) bernama qfine-konten; arah dari tipe transisi yang dikirim useNavigasiHalus */
+::view-transition-old(root),
+::view-transition-new(root) { animation: none; }
+::view-transition-old(qfine-konten) { animation: 150ms ease-in both vt-pudar reverse; }
+::view-transition-new(qfine-konten) { animation: 260ms ease-out 80ms both vt-pudar, 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both vt-naik; }
+html:active-view-transition-type(nav-forward)::view-transition-old(qfine-konten) {
+  --geser-halaman: -48px;
+  animation: 160ms ease-in both vt-pudar reverse, 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both vt-geser reverse;
+}
+html:active-view-transition-type(nav-forward)::view-transition-new(qfine-konten) {
+  --geser-halaman: 48px;
+  animation: 240ms ease-out 120ms both vt-pudar, 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both vt-geser;
+}
+html:active-view-transition-type(nav-back)::view-transition-old(qfine-konten) {
+  --geser-halaman: 48px;
+  animation: 160ms ease-in both vt-pudar reverse, 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both vt-geser reverse;
+}
+html:active-view-transition-type(nav-back)::view-transition-new(qfine-konten) {
+  --geser-halaman: -48px;
+  animation: 240ms ease-out 120ms both vt-pudar, 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both vt-geser;
+}
+
+@keyframes vt-pudar { from { opacity: 0; } to { opacity: 1; } }
+@keyframes vt-geser { from { translate: var(--geser-halaman); } to { translate: 0; } }
+@keyframes vt-naik { from { translate: 0 10px; } to { translate: 0; } }
+
+::view-transition-group(qfine-topbar),
+::view-transition-group(qfine-sidebar),
+::view-transition-group(qfine-bottomnav) { animation: none; z-index: 100; }
+::view-transition-old(qfine-topbar),
+::view-transition-old(qfine-sidebar),
+::view-transition-old(qfine-bottomnav) { display: none; }
+::view-transition-new(qfine-topbar),
+::view-transition-new(qfine-sidebar),
+::view-transition-new(qfine-bottomnav) { animation: none; }
+
+/* Browser dengan View Transitions memakai transisi di atas; yang belum mendukung tetap memakai .halaman-masuk */
+@supports (view-transition-name: none) {
+  .halaman-masuk { animation: none; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   Modal & dialog konfirmasi: muncul "pop", menutup dengan halus (useTampilAnimasi)
+   ══════════════════════════════════════════════════════════ */
+.modal-latar { animation: modal-latar-masuk 0.22s ease both; }
+.modal-latar[data-keluar] { animation: modal-latar-keluar 0.2s ease forwards; }
+.modal-kotak { animation: modal-kotak-masuk 0.38s cubic-bezier(0.2, 1.25, 0.4, 1) both; }
+.modal-latar[data-keluar] .modal-kotak { animation: modal-kotak-keluar 0.2s ease forwards; }
+@media (max-width: 640px) {
+  /* HP: modal naik dari bawah seperti lembar aplikasi */
+  .modal-kotak { animation-name: modal-kotak-naik; }
+  .modal-latar[data-keluar] .modal-kotak { animation-name: modal-kotak-turun; }
+}
+@keyframes modal-latar-masuk { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modal-latar-keluar { from { opacity: 1; } to { opacity: 0; } }
+@keyframes modal-kotak-masuk { from { opacity: 0; transform: translateY(14px) scale(0.94); } to { opacity: 1; transform: none; } }
+@keyframes modal-kotak-keluar { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(8px) scale(0.97); } }
+@keyframes modal-kotak-naik { from { opacity: 0; transform: translateY(60px); } to { opacity: 1; transform: none; } }
+@keyframes modal-kotak-turun { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(60px); } }
+
+/* Utilitas animate-in (dipakai komponen; plugin animasi Tailwind tidak terpasang) */
+.animate-in { animation: animasi-masuk 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.animate-in.slide-in-from-bottom-5 { animation-name: animasi-naik; }
+@keyframes animasi-masuk { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes animasi-naik { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) { animation-duration: 0s !important; animation-delay: 0s !important; }
+  .modal-latar, .modal-kotak, .animate-in { animation: none !important; }
+}

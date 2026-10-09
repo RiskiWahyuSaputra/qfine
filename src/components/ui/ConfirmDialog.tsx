@@ -1,5 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
+import { useTampilAnimasi } from '@/lib/useTampilAnimasi';
 import { cn } from '@/lib/utils';
 import { AlertCircle } from 'lucide-react';
 import { Button } from './Button';
@@ -27,18 +28,19 @@ export function ConfirmDialog({
   isDestructive = true,
   isLoading = false,
 }: ConfirmDialogProps) {
-  if (!isOpen || typeof document === 'undefined') return null;
+  const [dirender, keluar] = useTampilAnimasi(isOpen);
+  if (!dirender || typeof document === 'undefined') return null;
 
   // Portal ke body: kartu kaca (backdrop-filter) mengurung elemen position:fixed di dalamnya,
   // sehingga overlay tidak menutupi layar bila modal dirender di dalam kartu
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 glass-overlay animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 glass-overlay modal-latar" data-keluar={keluar || undefined}>
       <div
         className="fixed inset-0"
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="relative w-full max-w-md rounded-2xl glass-modal p-6 z-10 text-center sm:text-left">
+      <div className="relative w-full max-w-md rounded-2xl glass-modal modal-kotak p-6 z-10 text-center sm:text-left">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
           <div
             className={cn(

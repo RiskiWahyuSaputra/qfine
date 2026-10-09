@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useNavigasiHalus } from '@/lib/useNavigasiHalus';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -33,19 +34,21 @@ const NAV_ITEMS = [
 
 export function Sidebar({ isOpen, onClose, userEmail, userName }: SidebarProps) {
   const pathname = usePathname();
+  const navigasiHalus = useNavigasiHalus();
 
   return (
     <>
       {/* Mobile Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 glass-overlay lg:hidden"
+          className="fixed inset-0 z-40 glass-overlay lg:hidden animate-in fade-in"
           onClick={onClose}
         />
       )}
 
       {/* Sidebar Container */}
       <aside
+        style={{ viewTransitionName: 'qfine-sidebar' }}
         className={cn(
           'fixed top-0 bottom-0 left-0 z-50 flex flex-col w-64 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] glass-panel border-r border-white/10 transition-transform duration-300 ease-in-out lg:translate-x-0',
           isOpen ? 'translate-x-0' : '-translate-x-full'
@@ -53,7 +56,7 @@ export function Sidebar({ isOpen, onClose, userEmail, userName }: SidebarProps) 
       >
         {/* Brand / Logo */}
         <div className="flex items-center justify-between h-20 px-6 border-b border-white/10">
-          <Link href="/dashboard" className="flex items-center gap-3 group">
+          <Link href="/dashboard" onClick={(e) => navigasiHalus(e, '/dashboard')} className="flex items-center gap-3 group">
             <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30 group-hover:scale-105 transition-transform">
               <Wallet className="w-5 h-5 text-white" />
             </div>
@@ -85,7 +88,10 @@ export function Sidebar({ isOpen, onClose, userEmail, userName }: SidebarProps) 
               <Link
                 key={item.name}
                 href={item.href}
-                onClick={onClose}
+                onClick={(e) => {
+                  onClose();
+                  navigasiHalus(e, item.href);
+                }}
                 className={cn(
                   'flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group',
                   isActive

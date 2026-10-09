@@ -4,6 +4,7 @@ import React from 'react';
 import { Menu, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { NotificationBell } from './NotificationBell';
+import { useNavigasiHalus } from '@/lib/useNavigasiHalus';
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -14,11 +15,12 @@ interface TopbarProps {
 export function Topbar({ onMenuClick, title, userName }: TopbarProps) {
   // Sapaan & tanggal bergantung jam/zona browser: server merender "Halo" tanpa tanggal, browser
   // langsung memakai waktu lokal setelah hidrasi (tanpa hydration mismatch)
+  const navigasiHalus = useNavigasiHalus();
   const waktu = React.useSyncExternalStore(berlanggananWaktu, waktuBrowser, () => null);
   const [greeting, today] = waktu ? waktu.split('|') : ['Halo', ''];
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between h-[calc(5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] px-4 sm:px-8 glass-panel border-b border-white/10 backdrop-blur-xl">
+    <header style={{ viewTransitionName: 'qfine-topbar' }} className="sticky top-0 z-30 flex items-center justify-between h-[calc(5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] px-4 sm:px-8 glass-panel border-b border-white/10 backdrop-blur-xl">
       <div className="flex items-center gap-4">
         <button
           onClick={onMenuClick}
@@ -42,6 +44,7 @@ export function Topbar({ onMenuClick, title, userName }: TopbarProps) {
       <div className="flex items-center gap-3">
         <Link
           href="/scan"
+          onClick={(e) => navigasiHalus(e, '/scan')}
           className="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-300 border border-cyan-500/30 hover:border-cyan-400/50 hover:bg-cyan-500/30 transition-all shadow-sm"
         >
           <Sparkles className="w-3.5 h-3.5 text-cyan-400" />

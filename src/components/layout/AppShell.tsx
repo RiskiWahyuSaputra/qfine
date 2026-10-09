@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
+import { usePathname } from 'next/navigation';
+import { EVENT_HALAMAN_SIAP } from '@/lib/useNavigasiHalus';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { BottomNav } from './BottomNav';
@@ -15,6 +17,12 @@ export function AppShell({ children, title }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string>('');
   const [userName, setUserName] = useState<string>('');
+  const pathname = usePathname();
+
+  // Halaman baru sudah tampil: View Transition dari useNavigasiHalus boleh mulai beranimasi
+  useLayoutEffect(() => {
+    window.dispatchEvent(new CustomEvent(EVENT_HALAMAN_SIAP, { detail: pathname }));
+  }, [pathname]);
 
   useEffect(() => {
     async function loadUser() {
@@ -49,7 +57,7 @@ export function AppShell({ children, title }: AppShellProps) {
           userName={userName}
         />
 
-        <main className="halaman-masuk flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-12">
+        <main style={{ viewTransitionName: 'qfine-konten' }} className="halaman-masuk flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-12">
           {children}
         </main>
       </div>

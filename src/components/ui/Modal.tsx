@@ -1,5 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
+import { useTampilAnimasi } from '@/lib/useTampilAnimasi';
 import { cn } from '@/lib/utils';
 import { X } from 'lucide-react';
 
@@ -20,7 +21,8 @@ export function Modal({
   children,
   maxWidth = 'lg',
 }: ModalProps) {
-  if (!isOpen || typeof document === 'undefined') return null;
+  const [dirender, keluar] = useTampilAnimasi(isOpen);
+  if (!dirender || typeof document === 'undefined') return null;
 
   const maxWidthClass = {
     sm: 'max-w-sm',
@@ -34,7 +36,7 @@ export function Modal({
   // Portal ke body: kartu kaca (backdrop-filter) mengurung elemen position:fixed di dalamnya,
   // sehingga overlay tidak menutupi layar bila modal dirender di dalam kartu
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto glass-overlay animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto glass-overlay modal-latar" data-keluar={keluar || undefined}>
       <div
         className="fixed inset-0"
         onClick={onClose}
@@ -42,7 +44,7 @@ export function Modal({
       />
       <div
         className={cn(
-          'relative w-full rounded-2xl glass-modal p-6 z-10 my-8 max-h-[90vh] flex flex-col',
+          'relative w-full rounded-2xl glass-modal modal-kotak p-6 z-10 my-8 max-h-[90vh] flex flex-col',
           maxWidthClass
         )}
       >

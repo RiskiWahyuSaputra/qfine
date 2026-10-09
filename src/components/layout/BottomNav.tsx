@@ -11,9 +11,11 @@ import {
   PiggyBank,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useNavigasiHalus } from '@/lib/useNavigasiHalus';
 
 export function BottomNav() {
   const pathname = usePathname();
+  const navigasiHalus = useNavigasiHalus();
 
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -24,7 +26,7 @@ export function BottomNav() {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pointer-events-none">
+    <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pointer-events-none" style={{ viewTransitionName: 'qfine-bottomnav' }}>
       <div className="pointer-events-auto max-w-md mx-auto rounded-2xl glass-panel border border-white/10 px-3 py-2 flex items-center justify-around shadow-2xl">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -35,6 +37,7 @@ export function BottomNav() {
               <Link
                 key={item.name}
                 href={item.href}
+                onClick={(e) => navigasiHalus(e, item.href)}
                 className="relative -top-5 flex flex-col items-center group"
               >
                 <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/40 border-2 border-slate-900 group-hover:scale-110 transition-transform">
@@ -49,6 +52,7 @@ export function BottomNav() {
             <Link
               key={item.name}
               href={item.href}
+              onClick={(e) => navigasiHalus(e, item.href)}
               className={cn(
                 'flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-colors',
                 isActive ? 'text-cyan-400' : 'text-slate-400 hover:text-white'
