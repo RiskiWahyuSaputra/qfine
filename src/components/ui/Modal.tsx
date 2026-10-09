@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 import { X } from 'lucide-react';
 
@@ -19,7 +20,7 @@ export function Modal({
   children,
   maxWidth = 'lg',
 }: ModalProps) {
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
   const maxWidthClass = {
     sm: 'max-w-sm',
@@ -30,8 +31,10 @@ export function Modal({
     '4xl': 'max-w-4xl',
   }[maxWidth];
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+  // Portal ke body: kartu kaca (backdrop-filter) mengurung elemen position:fixed di dalamnya,
+  // sehingga overlay tidak menutupi layar bila modal dirender di dalam kartu
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto glass-overlay animate-in fade-in duration-200">
       <div
         className="fixed inset-0"
         onClick={onClose}
@@ -39,7 +42,7 @@ export function Modal({
       />
       <div
         className={cn(
-          'relative w-full rounded-2xl glass-panel p-6 shadow-2xl border border-white/10 z-10 my-8 max-h-[90vh] flex flex-col',
+          'relative w-full rounded-2xl glass-modal p-6 z-10 my-8 max-h-[90vh] flex flex-col',
           maxWidthClass
         )}
       >
@@ -58,5 +61,5 @@ export function Modal({
         <div className="pt-4 overflow-y-auto flex-1">{children}</div>
       </div>
     </div>
-  );
+  , document.body);
 }

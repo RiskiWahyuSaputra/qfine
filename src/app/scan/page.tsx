@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { useToast } from '@/components/ui/ToastProvider';
+import { useCelebration } from '@/components/ui/CelebrationProvider';
 import { AIReceiptExtraction } from '@/lib/validations';
 import { formatIDR } from '@/lib/utils';
 import {
@@ -25,6 +26,7 @@ import Image from 'next/image';
 export default function ReceiptScannerPage() {
   const router = useRouter();
   const { success, error: toastError } = useToast();
+  const { rayakan } = useCelebration();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -180,7 +182,13 @@ export default function ReceiptScannerPage() {
         return;
       }
 
-      success('Transaksi berhasil disimpan dari hasil Scan AI!');
+      rayakan({
+        jenis: 'scan',
+        tipe: formData.type,
+        nominal: numAmount,
+        judul: formData.merchantName || 'Transaksi tersimpan',
+        keterangan: 'Dibaca otomatis oleh Gemini AI dan sudah masuk ke catatan keuangan Anda.',
+      });
       router.push('/dashboard');
     } catch {
       toastError('Gagal menyimpan data.');
@@ -307,7 +315,7 @@ export default function ReceiptScannerPage() {
               </div>
             ) : (
               <div className="max-w-lg w-full space-y-4">
-                <div className="relative w-full h-80 rounded-2xl overflow-hidden border border-white/10 bg-slate-900/80">
+                <div className="relative w-full h-80 rounded-2xl overflow-hidden border border-white/10 glass-subtle">
                   <Image
                     src={previewUrl}
                     alt="Preview Struk"
@@ -353,7 +361,7 @@ export default function ReceiptScannerPage() {
                   </span>
                 </div>
                 {previewUrl && (
-                  <div className="relative w-full h-96 rounded-xl overflow-hidden border border-white/10 bg-slate-900">
+                  <div className="relative w-full h-96 rounded-xl overflow-hidden border border-white/10 bg-slate-950/40">
                     <Image
                       src={previewUrl}
                       alt="Bukti Struk"
@@ -386,7 +394,7 @@ export default function ReceiptScannerPage() {
 
                 <div className="space-y-4">
                   {/* Type Selector */}
-                  <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-slate-900 border border-white/10">
+                  <div className="grid grid-cols-2 gap-2 p-1 rounded-xl glass-subtle">
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, type: 'expense' })}

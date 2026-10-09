@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Transaction, Category, TransactionType, PaymentMethod } from '@/types/database';
 import { transactionSchema } from '@/lib/validations';
 import { useToast } from '@/components/ui/ToastProvider';
+import { useCelebration } from '@/components/ui/CelebrationProvider';
 
 interface TransactionFormProps {
   initialData?: Transaction | null;
@@ -22,6 +23,7 @@ export function TransactionForm({
   onCancel,
 }: TransactionFormProps) {
   const { success, error: toastError } = useToast();
+  const { rayakan } = useCelebration();
   const [type, setType] = useState<TransactionType>(initialData?.type || 'expense');
   const [amount, setAmount] = useState<string>(initialData ? String(initialData.amount) : '');
   const [merchantName, setMerchantName] = useState(initialData?.merchant_name || '');
@@ -115,7 +117,17 @@ export function TransactionForm({
         return;
       }
 
-      success(initialData ? 'Transaksi berhasil diperbarui!' : 'Transaksi berhasil ditambahkan!');
+      // Pemasukan baru dirayakan dengan popup; edit & pengeluaran cukup toast
+      if (!initialData && validation.data.type === 'income') {
+        rayakan({
+          jenis: 'pemasukan',
+          nominal: validation.data.amount,
+          judul: validation.data.merchant_name,
+          keterangan: 'Saldo Anda bertambah. Terus pertahankan!',
+        });
+      } else {
+        success(initialData ? 'Transaksi berhasil diperbarui!' : 'Transaksi berhasil ditambahkan!');
+      }
       onSuccess();
     } catch {
       toastError('Terjadi kesalahan jaringan.');
@@ -154,7 +166,7 @@ export function TransactionForm({
       )}
 
       {/* Type Toggle Tabs */}
-      <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-slate-900 border border-white/10">
+      <div className="grid grid-cols-2 gap-2 p-1 rounded-xl glass-subtle">
         <button
           type="button"
           onClick={() => setType('expense')}

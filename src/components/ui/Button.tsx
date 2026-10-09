@@ -13,8 +13,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     
     const variants = {
       primary: 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/20 focus:ring-cyan-400 border border-cyan-400/30',
-      secondary: 'bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700/60 focus:ring-slate-400',
-      outline: 'bg-transparent hover:bg-slate-800/40 text-slate-300 border border-slate-700 focus:ring-slate-400',
+      secondary: 'bg-white/[0.07] hover:bg-white/[0.12] backdrop-blur-md text-slate-100 border border-white/15 focus:ring-slate-400',
+      outline: 'bg-transparent hover:bg-white/[0.07] text-slate-200 border border-white/20 focus:ring-slate-400',
       danger: 'bg-rose-600/90 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20 focus:ring-rose-500 border border-rose-500/30',
       ghost: 'bg-transparent hover:bg-white/5 text-slate-300 hover:text-white',
     };

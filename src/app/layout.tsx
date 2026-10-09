@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { ToastProvider } from '@/components/ui/ToastProvider';
+import { CelebrationProvider } from '@/components/ui/CelebrationProvider';
 
 export const metadata: Metadata = {
   title: 'QFine — Your Money, Clearly Managed',
@@ -16,7 +17,9 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body className="antialiased min-h-screen">
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          <CelebrationProvider>{children}</CelebrationProvider>
+        </ToastProvider>
       </body>
     </html>
   );

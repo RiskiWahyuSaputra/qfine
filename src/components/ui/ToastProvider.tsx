@@ -55,7 +55,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               'pointer-events-auto flex items-center justify-between p-4 rounded-xl shadow-xl border backdrop-blur-md transition-all animate-in slide-in-from-bottom-5 duration-300',
               t.type === 'success' && 'bg-emerald-950/80 border-emerald-500/30 text-emerald-200',
               t.type === 'error' && 'bg-rose-950/80 border-rose-500/30 text-rose-200',
-              t.type === 'info' && 'bg-slate-900/90 border-slate-700/60 text-slate-200'
+              t.type === 'info' && 'bg-white/10 backdrop-blur-xl border-white/15 text-slate-100'
             )}
           >
             <div className="flex items-center gap-3">

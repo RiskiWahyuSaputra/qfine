@@ -32,8 +32,9 @@ export function AppShell({ children, title }: AppShellProps) {
     loadUser();
   }, []);
 
+  // Tanpa warna latar sendiri: gradasi & orb di body harus terlihat di balik panel kaca
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-cyan-500 selection:text-white">
+    <div className="min-h-screen flex flex-col text-slate-100 selection:bg-cyan-500 selection:text-white">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}

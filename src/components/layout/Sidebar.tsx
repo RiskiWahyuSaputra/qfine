@@ -39,7 +39,7 @@ export function Sidebar({ isOpen, onClose, userEmail, userName }: SidebarProps) 
       {/* Mobile Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 glass-overlay lg:hidden"
           onClick={onClose}
         />
       )}

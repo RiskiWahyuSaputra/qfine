@@ -142,7 +142,7 @@ export default function SettingsPage() {
           </CardHeader>
 
           <div className="pt-4 space-y-3 text-xs text-slate-300">
-            <div className="p-3.5 rounded-xl bg-slate-900/60 border border-white/5 flex items-center justify-between">
+            <div className="p-3.5 rounded-xl glass-subtle flex items-center justify-between">
               <div>
                 <p className="font-semibold text-white">ID Pengguna (Supabase Auth)</p>
                 <p className="text-[11px] text-slate-400 font-mono mt-0.5">
@@ -154,7 +154,7 @@ export default function SettingsPage() {
               </span>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-900/60 border border-white/5 flex items-center justify-between">
+            <div className="p-3.5 rounded-xl glass-subtle flex items-center justify-between">
               <div>
                 <p className="font-semibold text-white">Penyimpanan Bukti (Supabase Storage)</p>
                 <p className="text-[11px] text-slate-400 mt-0.5">
@@ -166,7 +166,7 @@ export default function SettingsPage() {
               </span>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-900/60 border border-white/5 flex items-center justify-between">
+            <div className="p-3.5 rounded-xl glass-subtle flex items-center justify-between">
               <div>
                 <p className="font-semibold text-white">Model AI Receipt Scanner</p>
                 <p className="text-[11px] text-slate-400 mt-0.5">

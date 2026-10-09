@@ -263,7 +263,7 @@ export default function TransactionsPage() {
               {/* Desktop Table View */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-900/60 text-slate-400 uppercase text-[10px] tracking-wider border-b border-white/10">
+                  <thead className="bg-white/[0.04] text-slate-400 uppercase text-[10px] tracking-wider border-b border-white/10">
                     <tr>
                       <th className="py-3 px-4">Tanggal</th>
                       <th className="py-3 px-4">Merchant / Sumber</th>
@@ -303,7 +303,7 @@ export default function TransactionsPage() {
                             )}
                           </td>
                           <td className="py-3.5 px-4">
-                            <span className="px-2 py-0.5 rounded-md text-[11px] bg-slate-800 text-slate-300 border border-slate-700">
+                            <span className="px-2 py-0.5 rounded-md text-[11px] bg-white/[0.07] text-slate-200 border border-white/10">
                               {t.category?.name || 'Umum'}
                             </span>
                           </td>
@@ -408,7 +408,7 @@ export default function TransactionsPage() {
               </div>
 
               {/* Pagination Bar */}
-              <div className="flex items-center justify-between p-4 border-t border-white/10 bg-slate-900/40 text-xs text-slate-400">
+              <div className="flex items-center justify-between p-4 border-t border-white/10 bg-white/[0.03] text-xs text-slate-400">
                 <span>
                   Halaman <span className="text-white font-medium">{page}</span> dari{' '}
                   <span className="text-white font-medium">{totalPages}</span>

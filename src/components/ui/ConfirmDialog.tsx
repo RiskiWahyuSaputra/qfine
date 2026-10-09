@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 import { AlertCircle } from 'lucide-react';
 import { Button } from './Button';
@@ -26,16 +27,18 @@ export function ConfirmDialog({
   isDestructive = true,
   isLoading = false,
 }: ConfirmDialogProps) {
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+  // Portal ke body: kartu kaca (backdrop-filter) mengurung elemen position:fixed di dalamnya,
+  // sehingga overlay tidak menutupi layar bila modal dirender di dalam kartu
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 glass-overlay animate-in fade-in duration-200">
       <div
         className="fixed inset-0"
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="relative w-full max-w-md rounded-2xl glass-panel p-6 shadow-2xl border border-white/10 z-10 text-center sm:text-left">
+      <div className="relative w-full max-w-md rounded-2xl glass-modal p-6 z-10 text-center sm:text-left">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
           <div
             className={cn(
@@ -65,5 +68,5 @@ export function ConfirmDialog({
         </div>
       </div>
     </div>
-  );
+  , document.body);
 }
