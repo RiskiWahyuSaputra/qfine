@@ -9,10 +9,11 @@ import { formatIDR } from '@/lib/utils';
  * lalu langsung menyimpannya sebagai transaksi. Balasan berisi `pesan` siap ditampilkan sebagai
  * notifikasi di iPhone.
  *
- * POST /api/shortcut/scan
- *   Header  : Authorization: Bearer <QFINE_SHORTCUT_TOKEN>
- *   Body    : gambar mentah (Content-Type image/*) atau multipart dengan field "file"
- *   Query   : ?simpan=0 untuk hanya membaca tanpa menyimpan
+ * POST /api/shortcut/scan?token=<QFINE_SHORTCUT_TOKEN>
+ *   Token   : query ?token= atau header Authorization: Bearer <token> (Pintasan cukup memakai URL)
+ *   Body    : gambar mentah (jenis dikenali dari isinya, Content-Type boleh apa saja)
+ *             atau multipart dengan field "file"
+ *   Query   : &simpan=0 untuk hanya membaca tanpa menyimpan
  */
 export const maxDuration = 120;
 
@@ -21,7 +22,10 @@ const MAKS_UKURAN = 8 * 1024 * 1024;
 
 function tokenCocok(request: NextRequest) {
   const rahasia = process.env.QFINE_SHORTCUT_TOKEN || '';
-  const dikirim = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
+  const dikirim = (
+    request.nextUrl.searchParams.get('token') ||
+    (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '')
+  ).trim();
   if (rahasia.length < 16 || !dikirim) return false;
   const a = Buffer.from(dikirim);
   const b = Buffer.from(rahasia);
@@ -45,11 +49,27 @@ async function bacaGambar(request: NextRequest): Promise<{ buffer: Buffer; tipe:
     return { buffer: Buffer.from(await file.arrayBuffer()), tipe };
   }
 
-  if (!TIPE_GAMBAR.includes(jenis)) return 'Kirim gambar (JPG, PNG, WEBP, atau HEIC) sebagai isi request.';
   const buffer = Buffer.from(await request.arrayBuffer());
   if (!buffer.length) return 'Gambar kosong.';
   if (buffer.length > MAKS_UKURAN) return 'Ukuran gambar maksimal 8MB.';
-  return { buffer, tipe: jenis };
+  // Pintasan iPhone sering mengirim file tanpa Content-Type gambar: jenisnya dikenali dari isi file
+  const tipe = TIPE_GAMBAR.includes(jenis) ? jenis : kenaliGambar(buffer);
+  if (!tipe) return 'Kirim gambar (JPG, PNG, WEBP, atau HEIC) sebagai isi request.';
+  return { buffer, tipe };
+}
+
+/** Jenis gambar dari tanda tangan byte awal file */
+function kenaliGambar(b: Buffer): string | null {
+  if (b.length < 12) return null;
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'image/jpeg';
+  if (b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return 'image/png';
+  if (b.toString('ascii', 0, 4) === 'RIFF' && b.toString('ascii', 8, 12) === 'WEBP') return 'image/webp';
+  if (b.toString('ascii', 4, 8) === 'ftyp') {
+    const merek = b.toString('ascii', 8, 12);
+    if (['heic', 'heix', 'hevc', 'hevx'].includes(merek)) return 'image/heic';
+    if (['mif1', 'msf1', 'heif'].includes(merek)) return 'image/heif';
+  }
+  return null;
 }
 
 export async function POST(request: NextRequest) {
