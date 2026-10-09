@@ -132,6 +132,7 @@ npm run build
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `GEMINI_API_KEY`
    - `GEMINI_MODEL` = `gemini-3.8-flash`
+   - `GROQ_API_KEY` (opsional, cadangan Scan AI saat kuota Gemini habis), `GROQ_MODEL` = `qwen/qwen3.8-27b`, `AI_PENYEDIA_UTAMA` = `gemini` atau `groq`
    - `QFINE_EMAIL` & `QFINE_PASSWORD` (akun Supabase pemilik untuk masuk otomatis)
    - `QFINE_SHORTCUT_TOKEN` (opsional, untuk Pintasan iPhone: `POST /api/shortcut/scan?token=<token>` dengan isi berupa file gambar; transaksi langsung tersimpan)
 

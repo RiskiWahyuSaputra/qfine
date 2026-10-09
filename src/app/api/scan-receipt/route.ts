@@ -16,11 +16,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.GEMINI_API_KEY && !process.env.GROQ_API_KEY) {
       return NextResponse.json(
         {
           error:
-            'Fitur Scan Struk AI membutuhkan konfigurasi GEMINI_API_KEY di environment variables.',
+            'Fitur Scan Struk AI membutuhkan GEMINI_API_KEY dan/atau GROQ_API_KEY di environment variables.',
         },
         { status: 503 }
       );

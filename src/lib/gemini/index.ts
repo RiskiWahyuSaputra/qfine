@@ -33,16 +33,45 @@ ATURAN KETAT:
 Kembalikan jawaban HANYA dalam format JSON valid yang sesuai dengan skema.
 `;
 
+const PERINTAH_EKSTRAK = 'Ekstrak detail struk/bukti transaksi di atas ke dalam format JSON terstruktur.';
+
+type Penyedia = 'gemini' | 'groq';
+
+/**
+ * Baca struk/bukti transaksi dengan AI. Dua penyedia: Gemini (3 model, kuota gratis per project
+ * per model) dan Groq (cadangan, kuota terpisah). Penyedia pertama yang gagal (kuota habis, sibuk,
+ * kunci salah, atau output tidak valid) otomatis diganti penyedia berikutnya.
+ * Urutan: Gemini lalu Groq; AI_PENYEDIA_UTAMA=groq membalik urutannya.
+ */
 export async function scanReceiptWithGemini(
   imageBase64: string,
   mimeType: string = 'image/jpeg'
 ): Promise<AIReceiptExtraction> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error('GEMINI_API_KEY belum dikonfigurasi di environment variables.');
+  const urutan: Penyedia[] = process.env.AI_PENYEDIA_UTAMA === 'groq' ? ['groq', 'gemini'] : ['gemini', 'groq'];
+  const aktif = urutan.filter((p) => (p === 'gemini' ? process.env.GEMINI_API_KEY : process.env.GROQ_API_KEY));
+  if (aktif.length === 0) {
+    throw new Error('Isi GEMINI_API_KEY dan/atau GROQ_API_KEY di environment variables untuk memakai Scan AI.');
   }
 
-  const ai = new GoogleGenAI({ apiKey });
+  const galat: string[] = [];
+  for (const penyedia of aktif) {
+    try {
+      const teks = penyedia === 'gemini' ? await bacaDenganGemini(imageBase64, mimeType) : await bacaDenganGroq(imageBase64, mimeType);
+      return validasiHasil(teks);
+    } catch (err) {
+      const pesan = ringkasGalat(err);
+      console.error(`[ai] ${penyedia} gagal: ${pesan.slice(0, 200)}`);
+      galat.push(pesan);
+    }
+  }
+
+  // Satu penyedia: pesannya apa adanya (mis. "Kuota harian Gemini AI sudah habis ...")
+  if (galat.length === 1) throw new Error(galat[0]);
+  throw new Error(`Semua layanan AI sedang tidak bisa dipakai. ${aktif.map((p, i) => `${p === 'gemini' ? 'Gemini' : 'Groq'}: ${galat[i]}`).join(' | ')}`);
+}
+
+async function bacaDenganGemini(imageBase64: string, mimeType: string): Promise<string> {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
   const response = await generateDenganCadangan((model) => ai.models.generateContent({
     model,
@@ -57,9 +86,7 @@ export async function scanReceiptWithGemini(
               data: imageBase64,
             },
           },
-          {
-            text: 'Ekstrak detail struk/bukti transaksi di atas ke dalam format JSON terstruktur.',
-          },
+          { text: PERINTAH_EKSTRAK },
         ],
       },
     ],
@@ -68,19 +95,72 @@ export async function scanReceiptWithGemini(
     },
   }));
 
-  const responseText = response.text;
-  if (!responseText) {
-    throw new Error('Gemini API mengembalikan respons kosong.');
-  }
+  if (!response.text) throw new Error('Gemini API mengembalikan respons kosong.');
+  return response.text;
+}
 
+/** Model vision Groq (OpenAI-compatible); kuota gratis jauh lebih besar dari Gemini */
+const GROQ_MODEL_BAWAAN = 'qwen/qwen3.8-27b';
+
+async function bacaDenganGroq(imageBase64: string, mimeType: string): Promise<string> {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: process.env.GROQ_MODEL || GROQ_MODEL_BAWAAN,
+      temperature: 0.1,
+      response_format: { type: 'json_object' },
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: `${SYSTEM_INSTRUCTION}\n${PERINTAH_EKSTRAK}` },
+            { type: 'image_url', image_url: { url: `data:${mimeType};base64,${imageBase64}` } },
+          ],
+        },
+      ],
+    }),
+    signal: AbortSignal.timeout(60000),
+  });
+
+  const data = (await res.json().catch(() => ({}))) as {
+    choices?: { message?: { content?: string } }[];
+    error?: { message?: string };
+  };
+  if (!res.ok) {
+    if (res.status === 429) throw new Error('Kuota Groq sedang habis. Coba lagi beberapa saat lagi.');
+    throw new Error(`Groq menolak permintaan (status ${res.status}): ${data.error?.message || 'tanpa keterangan'}`);
+  }
+  const teks = data.choices?.[0]?.message?.content;
+  if (!teks) throw new Error('Groq mengembalikan respons kosong.');
+  return teks;
+}
+
+/** Pesan error yang bisa dibaca: Gemini kadang mengirim JSON mentah sebagai message */
+function ringkasGalat(err: unknown): string {
+  const pesan = err instanceof Error ? err.message : String(err);
+  try {
+    const json = JSON.parse(pesan) as { error?: { message?: string } };
+    if (json.error?.message) return json.error.message;
+  } catch {
+    // bukan JSON: pakai apa adanya
+  }
+  return pesan.replace(/\s+/g, ' ');
+}
+
+/** Teks JSON dari AI -> data struk yang tervalidasi skema */
+function validasiHasil(teks: string): AIReceiptExtraction {
   let parsedJson: unknown;
   try {
-    parsedJson = JSON.parse(responseText);
+    // Sebagian model membungkus JSON dengan ```json ... ```
+    parsedJson = JSON.parse(teks.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, ''));
   } catch {
     throw new Error('Gagal mem-parsing output AI sebagai JSON.');
   }
 
-  // Validasi dengan Zod
   const validated = aiReceiptOutputSchema.safeParse(parsedJson);
   if (!validated.success) {
     throw new Error(
