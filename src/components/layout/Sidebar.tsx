@@ -47,7 +47,7 @@ export function Sidebar({ isOpen, onClose, userEmail, userName }: SidebarProps) 
       {/* Sidebar Container */}
       <aside
         className={cn(
-          'fixed top-0 bottom-0 left-0 z-50 flex flex-col w-64 glass-panel border-r border-white/10 transition-transform duration-300 ease-in-out lg:translate-x-0',
+          'fixed top-0 bottom-0 left-0 z-50 flex flex-col w-64 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] glass-panel border-r border-white/10 transition-transform duration-300 ease-in-out lg:translate-x-0',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >

@@ -417,3 +417,126 @@ body::after {
 @media (prefers-reduced-motion: reduce) {
   .scan-garis { animation: none; top: 50%; }
 }
+
+/* ══════════════════════════════════════════════════════════
+   Interaksi halus: efek tekan pada semua elemen yang bisa diklik, riak cahaya
+   dari titik klik (ClickFeedback), dan konten halaman yang muncul lembut.
+   Di layer base supaya utilitas Tailwind (transition-*, scale-*) tetap menang.
+   ══════════════════════════════════════════════════════════ */
+@layer base {
+  button,
+  a[href],
+  [role='button'],
+  summary,
+  select {
+    -webkit-tap-highlight-color: transparent;
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+    transition-duration: 0.2s;
+    transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  button:not(:disabled):active,
+  a[href]:active,
+  [role='button']:active,
+  summary:active {
+    transform: scale(0.96);
+    transition-duration: 0.08s;
+  }
+}
+
+.klik-riak {
+  position: fixed;
+  z-index: 9999;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(165, 243, 252, 0.38) 0%, rgba(103, 232, 249, 0.16) 45%, transparent 70%);
+  transform: scale(0.2);
+  opacity: 1;
+  animation: klik-riak 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+@keyframes klik-riak { to { transform: scale(1); opacity: 0; } }
+
+.halaman-masuk { animation: halaman-masuk 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes halaman-masuk { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* Panel notifikasi */
+.notif-panel {
+  position: fixed;
+  top: var(--notif-top, 84px);
+  right: var(--notif-right, 1rem);
+  z-index: 60;
+  width: min(360px, calc(100vw - 2rem));
+  border-radius: 20px;
+  overflow: hidden;
+  transform-origin: top right;
+  animation: notif-buka 0.28s cubic-bezier(0.2, 1.2, 0.4, 1) both;
+}
+@media (max-width: 640px) {
+  .notif-panel { right: 1rem; left: 1rem; width: auto; transform-origin: top center; }
+}
+.notif-item {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 14px;
+  text-decoration: none;
+  animation: notif-item 0.32s ease both;
+}
+.notif-item:hover { background: rgba(255, 255, 255, 0.06); }
+.notif-item.is-baru { background: rgba(34, 211, 238, 0.06); }
+.notif-item.is-baru:hover { background: rgba(34, 211, 238, 0.1); }
+.notif-ikon {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+}
+.notif-ikon.is-bahaya { background: rgba(244, 63, 94, 0.15); color: #fb7185; border-color: rgba(244, 63, 94, 0.3); }
+.notif-ikon.is-peringatan { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3); }
+.notif-ikon.is-sukses { background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.3); }
+.notif-ikon.is-info { background: rgba(34, 211, 238, 0.13); color: #67e8f9; border-color: rgba(34, 211, 238, 0.28); }
+.notif-goyang { animation: notif-goyang 2.4s ease-in-out infinite; transform-origin: 50% 2px; }
+.notif-lencana { animation: notif-lencana 0.4s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+@keyframes notif-buka { from { opacity: 0; transform: translateY(-6px) scale(0.95); } to { opacity: 1; transform: none; } }
+@keyframes notif-item { from { opacity: 0; transform: translateX(6px); } to { opacity: 1; transform: none; } }
+@keyframes notif-goyang { 0%, 70%, 100% { transform: rotate(0); } 75% { transform: rotate(14deg); } 80% { transform: rotate(-12deg); } 85% { transform: rotate(8deg); } 90% { transform: rotate(-5deg); } }
+@keyframes notif-lencana { from { transform: scale(0); } to { transform: scale(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .halaman-masuk, .notif-panel, .notif-item, .notif-goyang, .notif-lencana { animation: none; }
+  button:not(:disabled):active, a[href]:active, [role='button']:active, summary:active { transform: none; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   Mode aplikasi (Layar Utama iPhone / PWA standalone)
+   ══════════════════════════════════════════════════════════ */
+html {
+  /* Latar tetap gelap saat iOS memantul (overscroll) di atas/bawah halaman */
+  background-color: #070b1a;
+  -webkit-text-size-adjust: 100%;
+}
+@media (max-width: 640px) {
+  /* iOS memperbesar halaman otomatis bila font kolom isian < 16px */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+@media (display-mode: standalone) {
+  /* Terasa seperti aplikasi: teks antarmuka tidak terseleksi saat ditekan lama, tanpa menu tautan */
+  body {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    overscroll-behavior-y: none;
+  }
+  input,
+  textarea,
+  [contenteditable='true'] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}

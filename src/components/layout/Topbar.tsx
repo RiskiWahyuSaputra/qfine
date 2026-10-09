@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Menu, Bell, Sparkles } from 'lucide-react';
+import { Menu, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { NotificationBell } from './NotificationBell';
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -17,7 +18,7 @@ export function Topbar({ onMenuClick, title, userName }: TopbarProps) {
   const [greeting, today] = waktu ? waktu.split('|') : ['Halo', ''];
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between h-20 px-4 sm:px-8 glass-panel border-b border-white/10 backdrop-blur-xl">
+    <header className="sticky top-0 z-30 flex items-center justify-between h-[calc(5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] px-4 sm:px-8 glass-panel border-b border-white/10 backdrop-blur-xl">
       <div className="flex items-center gap-4">
         <button
           onClick={onMenuClick}
@@ -47,13 +48,7 @@ export function Topbar({ onMenuClick, title, userName }: TopbarProps) {
           <span>Scan Bukti AI</span>
         </Link>
 
-        <button
-          className="p-2.5 rounded-xl glass-card text-slate-400 hover:text-white relative"
-          aria-label="Notifikasi"
-        >
-          <Bell className="w-4 h-4" />
-          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-cyan-400 ring-2 ring-slate-900" />
-        </button>
+        <NotificationBell />
       </div>
     </header>
   );

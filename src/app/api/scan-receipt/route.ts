@@ -82,6 +82,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Internal Server Error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error('[scan-receipt] gagal:', message);
+    // Kuota / layanan AI sedang tidak tersedia: 503 supaya jelas bukan kesalahan gambar
+    const status = /Kuota harian|sedang sibuk/.test(message) ? 503 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }

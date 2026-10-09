@@ -93,40 +93,91 @@ export async function scanReceiptWithGemini(
 
 /** Model utama; gemini-2.5-flash sudah tidak tersedia untuk pengguna baru (404 dari Gemini API) */
 const MODEL_BAWAAN = 'gemini-3.8-flash';
-/** Alias yang selalu menunjuk model Flash terbaru: dipakai bila model utama sibuk atau dipensiunkan */
-const MODEL_CADANGAN = 'gemini-flash-latest';
-const MAKS_PERCOBAAN = 3;
+/**
+ * Cadangan bila model utama sibuk atau kuotanya habis. Kuota gratis Gemini dihitung per model
+ * per hari (mis. 20 request untuk gemini-3.8-flash), jadi tiap cadangan menambah jatah scan harian.
+ */
+const MODEL_CADANGAN = ['gemini-3.5-flash', 'gemini-3.1-flash-lite'];
+/** Percobaan per model saat server Gemini sibuk (503) */
+const MAKS_PERCOBAAN_SIBUK = 2;
+
+/** Model yang kuotanya habis -> waktu (ms) kuota diperkirakan pulih; dilewati sampai saat itu */
+const kuotaHabisSampai = new Map<string, number>();
 
 /**
- * Model Flash sering sibuk (503) atau kena batas kuota sesaat (429): dicoba ulang dengan jeda
- * bertahap, lalu pindah ke model cadangan. Model yang sudah dipensiunkan (404) langsung dilewati.
+ * 503 (server sibuk): dicoba ulang sebentar lalu pindah model. 429 (kuota habis): tidak dicoba ulang
+ * karena kuota harian tidak pulih dalam hitungan detik; langsung pindah ke model berikutnya dan model
+ * itu dilewati pada scan berikutnya. 404 (model dipensiunkan): langsung dilewati.
  */
 async function generateDenganCadangan(
   panggil: (model: string) => Promise<GenerateContentResponse>
 ): Promise<GenerateContentResponse> {
   const utama = process.env.GEMINI_MODEL || MODEL_BAWAAN;
-  const daftar = [...new Set([utama, MODEL_CADANGAN])];
+  const sekarang = Date.now();
+  const semua = [...new Set([utama, ...MODEL_CADANGAN])];
+  const tersedia = semua.filter((m) => (kuotaHabisSampai.get(m) ?? 0) <= sekarang);
   let terakhir: unknown;
+  let semuaKuotaHabis = tersedia.length === 0;
 
-  for (const model of daftar) {
-    for (let percobaan = 1; percobaan <= MAKS_PERCOBAAN; percobaan++) {
+  for (const model of tersedia) {
+    for (let percobaan = 1; percobaan <= MAKS_PERCOBAAN_SIBUK; percobaan++) {
       try {
         return await panggil(model);
       } catch (err) {
         terakhir = err;
         const status = err instanceof ApiError ? err.status : 0;
-        if (status === 404) break; // model tidak tersedia: lanjut ke cadangan
-        if (status !== 503 && status !== 429) throw err; // kesalahan lain (gambar, kunci API, dll.)
-        if (percobaan < MAKS_PERCOBAAN) await jeda(800 * percobaan);
+        console.error(`[gemini] ${model} gagal (status ${status || '-'}): ${pesanSingkat(err)}`);
+        if (status === 429) {
+          kuotaHabisSampai.set(model, Date.now() + jedaPulih(err));
+          semuaKuotaHabis = true;
+          break;
+        }
+        semuaKuotaHabis = false;
+        if (status === 404) break;
+        if (status !== 503) throw err; // kesalahan lain (gambar tidak terbaca, kunci API salah, dll.)
+        if (percobaan < MAKS_PERCOBAAN_SIBUK) await jeda(1000 * percobaan);
       }
     }
   }
 
+  if (semuaKuotaHabis) {
+    const pulih = Math.min(...semua.map((m) => kuotaHabisSampai.get(m) ?? Infinity));
+    throw new Error(
+      'Kuota harian Gemini AI sudah habis (paket gratis). ' +
+        (Number.isFinite(pulih) ? `Scan bisa dipakai lagi sekitar ${lamaTunggu(pulih - Date.now())} lagi, ` : 'Coba lagi nanti, ') +
+        'atau isi transaksi secara manual.'
+    );
+  }
   const status = terakhir instanceof ApiError ? terakhir.status : 0;
-  if (status === 503 || status === 429) {
+  if (status === 503) {
     throw new Error('Layanan AI Gemini sedang sibuk. Silakan coba scan lagi dalam beberapa saat.');
   }
   throw terakhir;
+}
+
+/** Lama kuota pulih dari pesan Gemini ("retryDelay":"59169s" / "Please retry in 16h26m9s"); bawaan 1 jam */
+function jedaPulih(err: unknown): number {
+  const pesan = err instanceof Error ? err.message : String(err);
+  const detik = pesan.match(/"retryDelay"\s*:\s*"(\d+(?:\.\d+)?)s"/);
+  if (detik) return Math.max(60, parseFloat(detik[1])) * 1000;
+  const teks = pesan.match(/retry in (?:(\d+)h)?(?:(\d+)m)?(?:(\d+(?:\.\d+)?)s)?/i);
+  if (teks && (teks[1] || teks[2] || teks[3])) {
+    return Math.max(60, (Number(teks[1] || 0) * 3600) + (Number(teks[2] || 0) * 60) + Number(teks[3] || 0)) * 1000;
+  }
+  return 3600 * 1000;
+}
+
+function lamaTunggu(ms: number) {
+  const menit = Math.max(1, Math.round(ms / 60000));
+  if (menit < 60) return `${menit} menit`;
+  const jam = Math.floor(menit / 60);
+  const sisa = menit % 60;
+  return sisa ? `${jam} jam ${sisa} menit` : `${jam} jam`;
+}
+
+function pesanSingkat(err: unknown) {
+  const pesan = err instanceof Error ? err.message : String(err);
+  return pesan.replace(/\s+/g, ' ').slice(0, 160);
 }
 
 function jeda(ms: number) {

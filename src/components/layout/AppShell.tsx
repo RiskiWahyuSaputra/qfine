@@ -49,7 +49,7 @@ export function AppShell({ children, title }: AppShellProps) {
           userName={userName}
         />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-24 lg:pb-12">
+        <main className="halaman-masuk flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-12">
           {children}
         </main>
       </div>

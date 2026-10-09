@@ -67,7 +67,7 @@ export default function ReceiptScannerPage() {
 
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   // Scan gagal: tombol "Coba Scan Lagi" muncul (scan normalnya jalan otomatis saat gambar dipilih)
-  const [scanGagal, setScanGagal] = useState(false);
+  const [scanGagal, setScanGagal] = useState<string | null>(null);
   // Nomor scan terakhir: hasil scan lama diabaikan bila gambar sudah diganti / dibatalkan
   const scanKe = useRef(0);
 
@@ -101,7 +101,7 @@ export default function ReceiptScannerPage() {
     const nomor = ++scanKe.current;
 
     setIsScanning(true);
-    setScanGagal(false);
+    setScanGagal(null);
     setScanResult(null);
     setDuplicateWarning(null);
 
@@ -118,8 +118,9 @@ export default function ReceiptScannerPage() {
       if (nomor !== scanKe.current) return;
 
       if (!res.ok) {
-        toastError(resData.error || 'Gagal memindai bukti transaksi dengan AI.');
-        setScanGagal(true);
+        const pesan = resData.error || 'Gagal memindai bukti transaksi dengan AI.';
+        toastError(pesan);
+        setScanGagal(pesan);
         return;
       }
 
@@ -143,7 +144,7 @@ export default function ReceiptScannerPage() {
     } catch {
       if (nomor !== scanKe.current) return;
       toastError('Terjadi kesalahan koneksi saat memindai.');
-      setScanGagal(true);
+      setScanGagal('Koneksi terputus saat memindai. Periksa internet lalu coba lagi.');
     } finally {
       if (nomor === scanKe.current) setIsScanning(false);
     }
@@ -212,7 +213,7 @@ export default function ReceiptScannerPage() {
   const resetAll = () => {
     scanKe.current++; // scan yang masih berjalan diabaikan
     setIsScanning(false);
-    setScanGagal(false);
+    setScanGagal(null);
     setSelectedFile(null);
     setPreviewUrl(null);
     setScanResult(null);
@@ -358,7 +359,7 @@ export default function ReceiptScannerPage() {
                       Gemini AI sedang membaca struk Anda…
                     </span>
                   ) : scanGagal ? (
-                    <span className="text-rose-300">Gambar belum berhasil dipindai. Coba lagi atau ganti gambar.</span>
+                    <span className="text-rose-300">{scanGagal}</span>
                   ) : null}
                 </p>
 
