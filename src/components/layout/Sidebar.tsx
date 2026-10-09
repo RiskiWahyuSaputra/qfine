@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Receipt,
@@ -10,13 +10,10 @@ import {
   PieChart,
   PiggyBank,
   Settings,
-  LogOut,
   Wallet,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { createClient } from '@/lib/supabase/client';
-import { useToast } from '@/components/ui/ToastProvider';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -36,20 +33,6 @@ const NAV_ITEMS = [
 
 export function Sidebar({ isOpen, onClose, userEmail, userName }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
-  const { success, error } = useToast();
-
-  const handleLogout = async () => {
-    try {
-      const supabase = createClient();
-      await supabase.auth.signOut();
-      success('Berhasil keluar akun');
-      router.push('/login');
-      router.refresh();
-    } catch {
-      error('Gagal keluar akun');
-    }
-  };
 
   return (
     <>
@@ -127,9 +110,9 @@ export function Sidebar({ isOpen, onClose, userEmail, userName }: SidebarProps) 
           })}
         </nav>
 
-        {/* User Info & Logout */}
+        {/* Info pemilik (tanpa logout: QFine dipakai pribadi, masuk otomatis) */}
         <div className="p-4 border-t border-white/10">
-          <div className="p-3.5 rounded-xl glass-card flex items-center justify-between mb-3">
+          <div className="p-3.5 rounded-xl glass-card flex items-center justify-between">
             <div className="flex items-center gap-3 overflow-hidden">
               <div className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-tr from-cyan-600 to-blue-700 text-white font-bold text-sm shrink-0 border border-white/20">
                 {(userName || userEmail || 'U').charAt(0).toUpperCase()}
@@ -143,13 +126,6 @@ export function Sidebar({ isOpen, onClose, userEmail, userName }: SidebarProps) 
             </div>
           </div>
 
-          <button
-            onClick={handleLogout}
-            className="flex items-center justify-center w-full gap-2 px-4 py-2.5 rounded-xl text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-rose-500/20 transition-all duration-200"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Keluar Akun</span>
-          </button>
         </div>
       </aside>
     </>

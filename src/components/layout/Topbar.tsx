@@ -11,26 +11,10 @@ interface TopbarProps {
 }
 
 export function Topbar({ onMenuClick, title, userName }: TopbarProps) {
-  const [today, setToday] = React.useState('Jumat, 9 Oktober 2026');
-
-  React.useEffect(() => {
-    setToday(
-      new Intl.DateTimeFormat('id-ID', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      }).format(new Date())
-    );
-  }, []);
-
-  const getGreeting = () => {
-    const hour = typeof window !== 'undefined' ? new Date().getHours() : 10;
-    if (hour < 11) return 'Selamat Pagi';
-    if (hour < 15) return 'Selamat Siang';
-    if (hour < 18) return 'Selamat Sore';
-    return 'Selamat Malam';
-  };
+  // Sapaan & tanggal bergantung jam/zona browser: server merender "Halo" tanpa tanggal, browser
+  // langsung memakai waktu lokal setelah hidrasi (tanpa hydration mismatch)
+  const waktu = React.useSyncExternalStore(berlanggananWaktu, waktuBrowser, () => null);
+  const [greeting, today] = waktu ? waktu.split('|') : ['Halo', ''];
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between h-20 px-4 sm:px-8 glass-panel border-b border-white/10 backdrop-blur-xl">
@@ -48,7 +32,8 @@ export function Topbar({ onMenuClick, title, userName }: TopbarProps) {
             {title}
           </h1>
           <p className="text-xs text-slate-400 hidden sm:block">
-            {getGreeting()}, <span className="text-slate-200 font-semibold">{userName || 'Ganteng'}</span> • {today}
+            {greeting}, <span className="text-slate-200 font-semibold">{userName || 'Ganteng'}</span>
+            {today && <> • {today}</>}
           </p>
         </div>
       </div>
@@ -72,4 +57,15 @@ export function Topbar({ onMenuClick, title, userName }: TopbarProps) {
       </div>
     </header>
   );
+}
+
+const berlanggananWaktu = () => () => {};
+
+/** "Selamat Siang|Jumat, 9 Oktober 2026" (string supaya snapshot stabil antar panggilan) */
+function waktuBrowser() {
+  const now = new Date();
+  const hour = now.getHours();
+  const sapaan = hour < 11 ? 'Selamat Pagi' : hour < 15 ? 'Selamat Siang' : hour < 18 ? 'Selamat Sore' : 'Selamat Malam';
+  const tanggal = new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(now);
+  return sapaan + '|' + tanggal;
 }

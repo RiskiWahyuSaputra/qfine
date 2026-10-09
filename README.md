@@ -39,7 +39,7 @@ Aplikasi pencatatan keuangan pribadi modern dengan estetika Glassmorphism modern
    - Label status otomatis (*Aman* atau *Over Budget*).
 
 6. **Keamanan & Autentikasi Modern**:
-   - Supabase Auth SSR dengan cookie session tersinkronisasi.
+   - Tanpa halaman login: server masuk otomatis ke akun pemilik (Supabase Auth SSR), RLS tetap berlaku.
    - PostgreSQL Row Level Security (RLS) di seluruh tabel.
    - Pengguna hanya dapat mengakses dan mengelola datanya sendiri.
 
@@ -72,6 +72,9 @@ NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-supabase-anon-key>
 GEMINI_API_KEY=<your-google-gemini-api-key>
 GEMINI_MODEL=gemini-2.5-flash
+# Akun Supabase pemilik (QFine tanpa halaman login, server masuk otomatis)
+QFINE_EMAIL=<email-akun-supabase-anda>
+QFINE_PASSWORD=<password-akun-supabase-anda>
 ```
 
 ### 4. Setup Database & Storage Supabase
@@ -129,6 +132,7 @@ npm run build
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `GEMINI_API_KEY`
    - `GEMINI_MODEL` = `gemini-2.5-flash`
+   - `QFINE_EMAIL` & `QFINE_PASSWORD` (akun Supabase pemilik untuk masuk otomatis)
 
 4. **Deploy**:
    - Klik tombol **Deploy**.
@@ -139,5 +143,5 @@ npm run build
 ## 🛠️ Penyelesaian Masalah Umum (Troubleshooting)
 
 - **Gemini API Error / 503**: Pastikan `GEMINI_API_KEY` telah didapatkan dari Google AI Studio dan kuota API aktif.
-- **Login redirect loop**: Pastikan `NEXT_PUBLIC_SUPABASE_URL` dan `NEXT_PUBLIC_SUPABASE_ANON_KEY` sudah benar diisi di `.env.local` dan Vercel Environment Variables.
+- **Halaman "QFine belum siap"**: QFine tidak punya halaman login; server masuk otomatis memakai `QFINE_EMAIL` & `QFINE_PASSWORD`. Pastikan keduanya (beserta variabel Supabase) terisi di `.env.local` / Vercel Environment Variables dan akunnya sudah terdaftar di Supabase Auth. Karena tanpa login, siapa pun yang tahu URL aplikasi bisa membukanya — jangan bagikan URL deploy.
 - **File struk tidak bisa dibuka**: Pastikan bucket `receipts` di Supabase Storage telah dibuat dengan setting **Private** dan script migration RLS telah dieksekusi.
