@@ -3,6 +3,7 @@ import './globals.css';
 import { ToastProvider } from '@/components/ui/ToastProvider';
 import { CelebrationProvider } from '@/components/ui/CelebrationProvider';
 import { ClickFeedback } from '@/components/ui/ClickFeedback';
+import { SplashScreen } from '@/components/ui/SplashScreen';
 
 export const metadata: Metadata = {
   title: 'QFine — Your Money, Clearly Managed',
@@ -37,6 +38,7 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body className="antialiased min-h-screen">
+        <SplashScreen />
         <ToastProvider>
           <CelebrationProvider>{children}</CelebrationProvider>
           <ClickFeedback />

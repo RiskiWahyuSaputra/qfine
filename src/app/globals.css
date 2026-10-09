@@ -619,3 +619,100 @@ html:active-view-transition-type(nav-back)::view-transition-new(qfine-konten) {
   ::view-transition-group(*) { animation-duration: 0s !important; animation-delay: 0s !important; }
   .modal-latar, .modal-kotak, .animate-in { animation: none !important; }
 }
+
+/* ══════════════════════════════════════════════════════════
+   Splash saat dibuka dari Layar Utama (SplashScreen). Tersembunyi di browser biasa;
+   tampil lewat display-mode standalone (atau ?splash=1 untuk pratinjau).
+   ══════════════════════════════════════════════════════════ */
+.splash { display: none; }
+@media (display-mode: standalone) {
+  .splash { display: grid; }
+}
+html.splash-paksa .splash { display: grid; }
+
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(37, 99, 235, 0.35) 0%, transparent 45%),
+    radial-gradient(circle at 15% 90%, rgba(139, 92, 246, 0.25) 0%, transparent 40%),
+    #070b1a;
+}
+.splash.is-keluar { animation: splash-keluar 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.splash-isi { display: flex; flex-direction: column; align-items: center; }
+
+.splash-ubin {
+  position: relative;
+  width: 128px;
+  height: 128px;
+  border-radius: 30px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, #ffffff 0%, #e2ecfc 100%);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4), 0 24px 60px -12px rgba(37, 99, 235, 0.65), 0 0 80px rgba(56, 189, 248, 0.25);
+  animation: splash-ubin 0.75s cubic-bezier(0.2, 1.35, 0.4, 1) both;
+}
+.splash-logo {
+  width: 86px;
+  height: auto;
+  animation: splash-logo 0.7s cubic-bezier(0.2, 1.3, 0.4, 1) 0.18s both;
+}
+/* Kilau cahaya yang menyapu ubin */
+.splash-kilau {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+.splash-kilau::after {
+  content: '';
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  width: 45%;
+  left: -60%;
+  transform: skewX(-20deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+  animation: splash-kilau 0.9s ease-in-out 0.75s both;
+}
+.splash-riak {
+  position: absolute;
+  inset: 0;
+  border-radius: 30px;
+  border: 2px solid rgba(56, 189, 248, 0.7);
+  opacity: 0;
+  animation: splash-riak 1.3s ease-out 0.55s both;
+}
+.splash-riak-2 { animation-delay: 0.85s; }
+
+.splash-nama {
+  margin: 1.4rem 0 0;
+  color: #fff;
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  animation: splash-teks 0.5s ease 0.65s both;
+}
+.splash-slogan {
+  margin: 0.35rem 0 0;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  animation: splash-teks 0.5s ease 0.8s both;
+}
+
+@keyframes splash-ubin { from { opacity: 0; transform: scale(0.4) rotate(-8deg); } to { opacity: 1; transform: none; } }
+@keyframes splash-logo { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: none; } }
+@keyframes splash-kilau { from { left: -60%; } to { left: 130%; } }
+@keyframes splash-riak { 0% { opacity: 0.8; transform: scale(1); } 100% { opacity: 0; transform: scale(1.7); } }
+@keyframes splash-teks { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes splash-keluar { to { opacity: 0; transform: scale(1.08); visibility: hidden; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-ubin, .splash-logo, .splash-nama, .splash-slogan { animation: none; }
+  .splash-riak, .splash-kilau { display: none; }
+  .splash.is-keluar { animation-duration: 0.2s; }
+}
