@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { ApiError, GoogleGenAI, type GenerateContentResponse } from '@google/genai';
 import { aiReceiptOutputSchema, AIReceiptExtraction } from '@/lib/validations';
 
 const SYSTEM_INSTRUCTION = `
@@ -42,11 +42,10 @@ export async function scanReceiptWithGemini(
     throw new Error('GEMINI_API_KEY belum dikonfigurasi di environment variables.');
   }
 
-  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   const ai = new GoogleGenAI({ apiKey });
 
-  const response = await ai.models.generateContent({
-    model: modelName,
+  const response = await generateDenganCadangan((model) => ai.models.generateContent({
+    model,
     contents: [
       {
         role: 'user',
@@ -67,7 +66,7 @@ export async function scanReceiptWithGemini(
     config: {
       responseMimeType: 'application/json',
     },
-  });
+  }));
 
   const responseText = response.text;
   if (!responseText) {
@@ -90,4 +89,46 @@ export async function scanReceiptWithGemini(
   }
 
   return validated.data;
+}
+
+/** Model utama; gemini-2.5-flash sudah tidak tersedia untuk pengguna baru (404 dari Gemini API) */
+const MODEL_BAWAAN = 'gemini-3.8-flash';
+/** Alias yang selalu menunjuk model Flash terbaru: dipakai bila model utama sibuk atau dipensiunkan */
+const MODEL_CADANGAN = 'gemini-flash-latest';
+const MAKS_PERCOBAAN = 3;
+
+/**
+ * Model Flash sering sibuk (503) atau kena batas kuota sesaat (429): dicoba ulang dengan jeda
+ * bertahap, lalu pindah ke model cadangan. Model yang sudah dipensiunkan (404) langsung dilewati.
+ */
+async function generateDenganCadangan(
+  panggil: (model: string) => Promise<GenerateContentResponse>
+): Promise<GenerateContentResponse> {
+  const utama = process.env.GEMINI_MODEL || MODEL_BAWAAN;
+  const daftar = [...new Set([utama, MODEL_CADANGAN])];
+  let terakhir: unknown;
+
+  for (const model of daftar) {
+    for (let percobaan = 1; percobaan <= MAKS_PERCOBAAN; percobaan++) {
+      try {
+        return await panggil(model);
+      } catch (err) {
+        terakhir = err;
+        const status = err instanceof ApiError ? err.status : 0;
+        if (status === 404) break; // model tidak tersedia: lanjut ke cadangan
+        if (status !== 503 && status !== 429) throw err; // kesalahan lain (gambar, kunci API, dll.)
+        if (percobaan < MAKS_PERCOBAAN) await jeda(800 * percobaan);
+      }
+    }
+  }
+
+  const status = terakhir instanceof ApiError ? terakhir.status : 0;
+  if (status === 503 || status === 429) {
+    throw new Error('Layanan AI Gemini sedang sibuk. Silakan coba scan lagi dalam beberapa saat.');
+  }
+  throw terakhir;
+}
+
+function jeda(ms: number) {
+  return new Promise((selesai) => setTimeout(selesai, ms));
 }

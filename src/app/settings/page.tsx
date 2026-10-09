@@ -170,7 +170,7 @@ export default function SettingsPage() {
               <div>
                 <p className="font-semibold text-white">Model AI Receipt Scanner</p>
                 <p className="text-[11px] text-slate-400 mt-0.5">
-                  Google Gemini 2.5 Flash Vision (Server-side Execution)
+                  Google Gemini 3.8 Flash (Server-side Execution)
                 </p>
               </div>
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30">

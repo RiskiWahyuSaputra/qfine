@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { scanReceiptWithGemini } from '@/lib/gemini';
 
-export const maxDuration = 60; // Allow sufficient time for vision inference
+export const maxDuration = 120; // Vision + percobaan ulang saat Gemini sibuk (503) bisa lebih dari 60 detik
 
 export async function POST(request: NextRequest) {
   try {

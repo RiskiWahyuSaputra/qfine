@@ -1,12 +1,12 @@
 # QFine — Your Money, Clearly Managed
 
-Aplikasi pencatatan keuangan pribadi modern dengan estetika Glassmorphism modern ala Telegram UI, ditenagai oleh Supabase (Auth, PostgreSQL DB, Storage) dan Google Gemini AI 2.5 Flash Vision untuk pemindaian struk & bukti transaksi otomatis.
+Aplikasi pencatatan keuangan pribadi modern dengan estetika Glassmorphism modern ala Telegram UI, ditenagai oleh Supabase (Auth, PostgreSQL DB, Storage) dan Google Gemini Flash (3.8) untuk pemindaian struk & bukti transaksi otomatis.
 
 ---
 
 ## 🌟 Fitur Utama
 
-1. **AI Receipt & Payment Scanner (Google Gemini 2.5 Flash Vision)**:
+1. **AI Receipt & Payment Scanner (Google Gemini 3.8 Flash)**:
    - Ambil foto kamera langsung atau unggah gambar bukti struk / transfer (BCA, Mandiri, BRI, QRIS, GoPay, Dana, dll).
    - Ekstraksi otomatis terstruktur via Zod: Nominal, merchant/toko, tanggal, metode pembayaran, dan saran kategori.
    - Deteksi kemungkinan transaksi ganda (duplicate transaction check).
@@ -71,7 +71,7 @@ Isi variabel berikut di `.env.local`:
 NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-supabase-anon-key>
 GEMINI_API_KEY=<your-google-gemini-api-key>
-GEMINI_MODEL=gemini-2.5-flash
+GEMINI_MODEL=gemini-3.8-flash
 # Akun Supabase pemilik (QFine tanpa halaman login, server masuk otomatis)
 QFINE_EMAIL=<email-akun-supabase-anda>
 QFINE_PASSWORD=<password-akun-supabase-anda>
@@ -131,7 +131,7 @@ npm run build
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `GEMINI_API_KEY`
-   - `GEMINI_MODEL` = `gemini-2.5-flash`
+   - `GEMINI_MODEL` = `gemini-3.8-flash`
    - `QFINE_EMAIL` & `QFINE_PASSWORD` (akun Supabase pemilik untuk masuk otomatis)
 
 4. **Deploy**:
