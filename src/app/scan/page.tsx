@@ -10,7 +10,7 @@ import { Select } from '@/components/ui/Select';
 import { useToast } from '@/components/ui/ToastProvider';
 import { useCelebration } from '@/components/ui/CelebrationProvider';
 import { AIReceiptExtraction } from '@/lib/validations';
-import { formatIDR } from '@/lib/utils';
+import { cn, formatIDR } from '@/lib/utils';
 import {
   Upload,
   Camera,
@@ -66,6 +66,10 @@ export default function ReceiptScannerPage() {
   }, []);
 
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
+  // Scan gagal: tombol "Coba Scan Lagi" muncul (scan normalnya jalan otomatis saat gambar dipilih)
+  const [scanGagal, setScanGagal] = useState(false);
+  // Nomor scan terakhir: hasil scan lama diabaikan bila gambar sudah diganti / dibatalkan
+  const scanKe = useRef(0);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -86,18 +90,24 @@ export default function ReceiptScannerPage() {
     setPreviewUrl(objectUrl);
     setScanResult(null);
     setDuplicateWarning(null);
+    // Gambar yang sama bisa dipilih lagi setelah diganti
+    e.target.value = '';
+    // Langsung dipindai, tanpa perlu klik tombol scan
+    void handleStartScan(file);
   };
 
-  const handleStartScan = async () => {
-    if (!selectedFile) return;
+  const handleStartScan = async (file: File | null = selectedFile) => {
+    if (!file) return;
+    const nomor = ++scanKe.current;
 
     setIsScanning(true);
+    setScanGagal(false);
     setScanResult(null);
     setDuplicateWarning(null);
 
     try {
       const data = new FormData();
-      data.append('file', selectedFile);
+      data.append('file', file);
 
       const res = await fetch('/api/scan-receipt', {
         method: 'POST',
@@ -105,10 +115,11 @@ export default function ReceiptScannerPage() {
       });
 
       const resData = await res.json();
+      if (nomor !== scanKe.current) return;
 
       if (!res.ok) {
         toastError(resData.error || 'Gagal memindai bukti transaksi dengan AI.');
-        setIsScanning(false);
+        setScanGagal(true);
         return;
       }
 
@@ -130,9 +141,11 @@ export default function ReceiptScannerPage() {
 
       success('Bukti transaksi berhasil diekstraksi oleh Gemini AI!');
     } catch {
+      if (nomor !== scanKe.current) return;
       toastError('Terjadi kesalahan koneksi saat memindai.');
+      setScanGagal(true);
     } finally {
-      setIsScanning(false);
+      if (nomor === scanKe.current) setIsScanning(false);
     }
   };
 
@@ -197,6 +210,9 @@ export default function ReceiptScannerPage() {
   };
 
   const resetAll = () => {
+    scanKe.current++; // scan yang masih berjalan diabaikan
+    setIsScanning(false);
+    setScanGagal(false);
     setSelectedFile(null);
     setPreviewUrl(null);
     setScanResult(null);
@@ -315,7 +331,7 @@ export default function ReceiptScannerPage() {
               </div>
             ) : (
               <div className="max-w-lg w-full space-y-4">
-                <div className="relative w-full h-80 rounded-2xl overflow-hidden border border-white/10 glass-subtle">
+                <div className={cn('relative w-full h-80 rounded-2xl overflow-hidden border border-white/10 glass-subtle', isScanning && 'scan-aktif')}>
                   <Image
                     src={previewUrl}
                     alt="Preview Struk"
@@ -323,26 +339,39 @@ export default function ReceiptScannerPage() {
                     className="object-contain"
                     unoptimized
                   />
+                  {/* Animasi pemindaian selama Gemini membaca gambar */}
+                  {isScanning && (
+                    <div className="scan-lapis" aria-hidden="true">
+                      <span className="scan-garis" />
+                      <span className="scan-sudut kiri-atas" />
+                      <span className="scan-sudut kanan-atas" />
+                      <span className="scan-sudut kiri-bawah" />
+                      <span className="scan-sudut kanan-bawah" />
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex items-center justify-center gap-3 pt-2">
-                  <Button
-                    variant="secondary"
-                    size="md"
-                    onClick={resetAll}
-                    disabled={isScanning}
-                  >
-                    Ganti Gambar
+                <p className="text-center text-xs text-slate-300 min-h-5" aria-live="polite">
+                  {isScanning ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+                      Gemini AI sedang membaca struk Anda…
+                    </span>
+                  ) : scanGagal ? (
+                    <span className="text-rose-300">Gambar belum berhasil dipindai. Coba lagi atau ganti gambar.</span>
+                  ) : null}
+                </p>
+
+                <div className="flex items-center justify-center gap-3">
+                  <Button variant="secondary" size="md" onClick={resetAll}>
+                    {isScanning ? 'Batal' : 'Ganti Gambar'}
                   </Button>
-                  <Button
-                    variant="primary"
-                    size="md"
-                    onClick={handleStartScan}
-                    isLoading={isScanning}
-                  >
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    <span>{isScanning ? 'Menganalisis dengan AI...' : 'Scan Sekarang'}</span>
-                  </Button>
+                  {scanGagal && (
+                    <Button variant="primary" size="md" onClick={() => handleStartScan()}>
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      <span>Coba Scan Lagi</span>
+                    </Button>
+                  )}
                 </div>
               </div>
             )}

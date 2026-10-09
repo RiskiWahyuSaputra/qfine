@@ -388,3 +388,32 @@ body::after {
   .rayakan-lingkar path { animation: none; stroke-dashoffset: 0; }
   .rayakan-riak, .rayakan-kilau, .rayakan-hujan { display: none; }
 }
+
+/* Animasi pemindaian struk (halaman Scan) selama Gemini membaca gambar */
+.scan-aktif img { filter: saturate(0.85) brightness(0.85); transition: filter 0.3s ease; }
+.scan-lapis {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.06), rgba(139, 92, 246, 0.08));
+}
+.scan-garis {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 8%;
+  height: 3px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, transparent, #22d3ee 20%, #a78bfa 80%, transparent);
+  box-shadow: 0 0 18px 4px rgba(34, 211, 238, 0.45);
+  animation: scan-sapu 1.8s ease-in-out infinite alternate;
+}
+.scan-sudut { position: absolute; width: 26px; height: 26px; border-color: #67e8f9; border-style: solid; opacity: 0.9; }
+.scan-sudut.kiri-atas { top: 12px; left: 12px; border-width: 3px 0 0 3px; border-top-left-radius: 10px; }
+.scan-sudut.kanan-atas { top: 12px; right: 12px; border-width: 3px 3px 0 0; border-top-right-radius: 10px; }
+.scan-sudut.kiri-bawah { bottom: 12px; left: 12px; border-width: 0 0 3px 3px; border-bottom-left-radius: 10px; }
+.scan-sudut.kanan-bawah { bottom: 12px; right: 12px; border-width: 0 3px 3px 0; border-bottom-right-radius: 10px; }
+@keyframes scan-sapu { from { top: 8%; } to { top: 90%; } }
+@media (prefers-reduced-motion: reduce) {
+  .scan-garis { animation: none; top: 50%; }
+}
