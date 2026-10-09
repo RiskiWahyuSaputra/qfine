@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -24,7 +23,6 @@ import {
 import Image from 'next/image';
 
 export default function ReceiptScannerPage() {
-  const router = useRouter();
   const { success, error: toastError } = useToast();
   const { rayakan } = useCelebration();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -201,9 +199,12 @@ export default function ReceiptScannerPage() {
         tipe: formData.type,
         nominal: numAmount,
         judul: formData.merchantName || 'Transaksi tersimpan',
-        keterangan: 'Dibaca otomatis oleh Gemini AI dan sudah masuk ke catatan keuangan Anda.',
+        keterangan: 'Sudah masuk ke catatan keuangan Anda. Silakan scan bukti berikutnya.',
       });
-      router.push('/dashboard');
+      // Kembali ke tampilan unggah supaya bisa langsung scan bukti berikutnya
+      setIsSaving(false);
+      resetAll();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch {
       toastError('Gagal menyimpan data.');
       setIsSaving(false);

@@ -2,11 +2,10 @@ import React from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { TypeBadge } from '@/components/ui/TypeBadge';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { formatIDR, formatDateID } from '@/lib/utils';
+import { cn, formatIDR } from '@/lib/utils';
 import { Transaction } from '@/types/database';
-import { ArrowRight, Receipt, Sparkles } from 'lucide-react';
+import { ArrowDownLeft, ArrowRight, ArrowUpRight, Receipt, Sparkles } from 'lucide-react';
 
 interface RecentTransactionsProps {
   transactions: Transaction[];
@@ -19,7 +18,7 @@ export function RecentTransactions({ transactions, onAddClick }: RecentTransacti
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <div>
           <CardTitle className="text-base">Transaksi Terbaru</CardTitle>
-          <p className="text-xs text-slate-400">10 aktivitas pencatatan terakhir</p>
+          <p className="text-xs text-slate-400">Aktivitas pencatatan terakhir</p>
         </div>
         <Link href="/transactions">
           <Button variant="ghost" size="sm" className="text-xs text-cyan-400 hover:text-cyan-300">
@@ -38,57 +37,45 @@ export function RecentTransactions({ transactions, onAddClick }: RecentTransacti
           onAction={onAddClick}
         />
       ) : (
-        <div className="divide-y divide-white/5 overflow-x-auto">
+        <div className="-mx-2 divide-y divide-white/5">
           {transactions.map((t) => {
             const isIncome = t.type === 'income';
+            const warna = t.category?.color || (isIncome ? '#10b981' : '#f43f5e');
+            const Arah = isIncome ? ArrowDownLeft : ArrowUpRight;
             return (
               <div
                 key={t.id}
-                className="py-3.5 flex items-center justify-between gap-4 hover:bg-white/[0.02] px-2 rounded-xl transition-colors"
+                className="flex items-center gap-3 px-2 py-3 rounded-xl hover:bg-white/[0.03] transition-colors"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 border"
-                    style={{
-                      backgroundColor: `${t.category?.color || '#0284c7'}15`,
-                      borderColor: `${t.category?.color || '#0284c7'}30`,
-                      color: t.category?.color || '#38bdf8',
-                    }}
-                  >
-                    {(t.category?.name || t.merchant_name || 'T').slice(0, 2).toUpperCase()}
-                  </div>
+                {/* Ikon arah (masuk/keluar) dengan warna kategori */}
+                <div
+                  className="w-10 h-10 rounded-xl grid place-items-center shrink-0 border"
+                  style={{ backgroundColor: `${warna}1f`, borderColor: `${warna}40`, color: warna }}
+                >
+                  <Arah className="w-4 h-4" />
+                </div>
 
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold text-white truncate">{t.merchant_name}</p>
-                      {t.source === 'ai_scan' && (
-                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
-                          <Sparkles className="w-2.5 h-2.5" />
-                          <span>AI</span>
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
-                      <span>{formatDateID(t.transaction_date)}</span>
-                      <span>•</span>
-                      <span>{t.category?.name || 'Umum'}</span>
-                      <span>•</span>
-                      <span>{t.payment_method}</span>
-                    </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <p className="text-sm font-semibold text-white truncate">{t.merchant_name}</p>
+                    {t.source === 'ai_scan' && (
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-px rounded-md text-[10px] font-semibold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 shrink-0">
+                        <Sparkles className="w-2.5 h-2.5" />
+                        AI
+                      </span>
+                    )}
                   </div>
+                  <p className="text-xs text-slate-400 truncate mt-0.5">
+                    {t.category?.name || 'Tanpa kategori'} · {tanggalPendek(t.transaction_date)}
+                  </p>
                 </div>
 
                 <div className="text-right shrink-0">
-                  <div
-                    className={`text-sm font-bold tracking-tight ${
-                      isIncome ? 'text-emerald-400' : 'text-slate-100'
-                    }`}
-                  >
-                    {isIncome ? '+' : '-'} {formatIDR(Number(t.amount) || 0)}
-                  </div>
-                  <div className="mt-0.5">
-                    <TypeBadge type={t.type} />
-                  </div>
+                  <p className={cn('text-sm font-bold tracking-tight tabular-nums', isIncome ? 'text-emerald-400' : 'text-rose-300')}>
+                    {isIncome ? '+' : '−'}
+                    {formatIDR(Number(t.amount) || 0)}
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">{t.payment_method}</p>
                 </div>
               </div>
             );
@@ -97,4 +84,16 @@ export function RecentTransactions({ transactions, onAddClick }: RecentTransacti
       )}
     </Card>
   );
+}
+
+/** "5 Okt" untuk tahun berjalan, "5 Okt 2025" untuk tahun lain */
+function tanggalPendek(tanggal: string) {
+  const [tahun, bulan, hari] = tanggal.split('-').map(Number);
+  if (!tahun || !bulan || !hari) return tanggal;
+  const d = new Date(tahun, bulan - 1, hari);
+  return new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    ...(tahun !== new Date().getFullYear() ? { year: 'numeric' } : {}),
+  }).format(d);
 }

@@ -52,7 +52,6 @@ export function AppShell({ children, title }: AppShellProps) {
 
       <div className="flex-1 flex flex-col lg:pl-64 transition-all duration-300">
         <Topbar
-          onMenuClick={() => setSidebarOpen(true)}
           title={title}
           userName={userName}
         />

@@ -1,18 +1,17 @@
 'use client';
 
 import React from 'react';
-import { Menu, Sparkles } from 'lucide-react';
+import { Settings, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { NotificationBell } from './NotificationBell';
 import { useNavigasiHalus } from '@/lib/useNavigasiHalus';
 
 interface TopbarProps {
-  onMenuClick: () => void;
   title: string;
   userName?: string;
 }
 
-export function Topbar({ onMenuClick, title, userName }: TopbarProps) {
+export function Topbar({ title, userName }: TopbarProps) {
   // Sapaan & tanggal bergantung jam/zona browser: server merender "Halo" tanpa tanggal, browser
   // langsung memakai waktu lokal setelah hidrasi (tanpa hydration mismatch)
   const navigasiHalus = useNavigasiHalus();
@@ -22,13 +21,6 @@ export function Topbar({ onMenuClick, title, userName }: TopbarProps) {
   return (
     <header style={{ viewTransitionName: 'qfine-topbar' }} className="sticky top-0 z-30 flex items-center justify-between h-[calc(5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] px-4 sm:px-8 glass-panel border-b border-white/10 backdrop-blur-xl">
       <div className="flex items-center gap-4">
-        <button
-          onClick={onMenuClick}
-          className="p-2.5 rounded-xl glass-card text-slate-300 hover:text-white lg:hidden"
-          aria-label="Buka menu"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
 
         <div>
           <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
@@ -51,6 +43,14 @@ export function Topbar({ onMenuClick, title, userName }: TopbarProps) {
           <span>Scan Bukti AI</span>
         </Link>
 
+        <Link
+          href="/settings"
+          onClick={(e) => navigasiHalus(e, '/settings')}
+          className="lg:hidden p-2.5 rounded-xl glass-card text-slate-400 hover:text-white"
+          aria-label="Pengaturan"
+        >
+          <Settings className="w-4 h-4" />
+        </Link>
         <NotificationBell />
       </div>
     </header>
