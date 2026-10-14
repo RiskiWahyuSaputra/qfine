@@ -26,8 +26,11 @@ export function SummaryCards({
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-      {/* Hero: Saldo — menonjol di 2 kolom mobile, 1 kolom desktop tapi scale lebih besar */}
-      <Card className="col-span-2 lg:col-span-1 relative overflow-hidden group border-cyan-400/25 hover:border-cyan-400/40 bg-gradient-to-br from-cyan-500/[0.09] via-blue-600/[0.07] to-indigo-500/[0.06] p-5 sm:p-6">
+      {/* Hero premium — GlassQuality.premium + ios27 frost, static hero surface */}
+      <Card
+        glass={false}
+        className="col-span-2 lg:col-span-1 relative overflow-hidden group liquid-hero liquid-quality-premium p-5 sm:p-6"
+      >
         <div className="pointer-events-none absolute -right-8 -bottom-8 w-32 h-32 rounded-full bg-gradient-to-tr from-cyan-500/25 to-blue-600/20 blur-2xl group-hover:scale-110 transition-transform duration-500" />
         <div className="relative flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
@@ -108,7 +111,7 @@ function CompactCard({
   badge?: React.ReactNode;
 }) {
   return (
-    <Card className="relative overflow-hidden group p-4 sm:p-5">
+    <Card className="liquid-quality-standard relative overflow-hidden group p-4 sm:p-5">
       <div
         className={`pointer-events-none absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-gradient-to-tr ${orb} blur-2xl group-hover:scale-110 transition-transform`}
       />

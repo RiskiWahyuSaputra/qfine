@@ -16,7 +16,7 @@ export function RecentTransactions({ transactions, onAddClick }: RecentTransacti
   const count = transactions.length;
   // Mobile: tampilkan 5, desktop 10 via CSS (hidden sm:flex untuk item 6-10)
   return (
-    <Card className="overflow-hidden">
+    <Card className="liquid-quality-standard overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">

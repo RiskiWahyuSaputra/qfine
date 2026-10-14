@@ -84,97 +84,242 @@ body::after {
 }
 
 /* ══════════════════════════════════════════════════════════
-   Glassmorphism: kaca bening (tint putih tipis), blur + saturate,
-   tepi terang di atas (highlight) dan bayangan lembut di bawah.
+   Liquid Glass iOS 26/27 — port web dari liquid_glass_widgets (Flutter)
+   Arsitektur diadaptasi ke CSS: token thickness/blur/quality dipetakan
+   ke custom properties, bukan shader GLSL. Prinsip "glass is a platter"
+   tetap dijaga: nav chrome = liquid premium, content card = standard.
+   Docs: github.com/sdegenaar/liquid_glass_widgets
    ══════════════════════════════════════════════════════════ */
 :root {
-  /* backdrop-filter selalu lewat var(--glass-blur): Lightning CSS (compiler CSS Next/Tailwind) mengubah
-     nilai literal menjadi -webkit-backdrop-filter saja, sehingga blur mati di Chrome/Edge. */
-  --glass-tint: rgba(255, 255, 255, 0.06);
-  --glass-tint-strong: rgba(255, 255, 255, 0.09);
-  --glass-border: rgba(255, 255, 255, 0.12);
-  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  /* Token global — padanan GlassThemeData.simple(thickness, blur, quality) */
+  --liquid-thickness: 28; /* px, dipakai untuk shadow/border opacity scale */
+  --liquid-blur: 20; /* px, base blur kartu */
+  --liquid-saturate: 150%;
+  --liquid-radius-card: 22px; /* iOS 26 squircle-ish, bukan 12px */
+  --liquid-radius-panel: 20px;
+  --liquid-specular: 1; /* 0 soft / 1 medium / 1.35 sharp — opacity highlight */
+  /* Palet liquid — iOS 27 frost + rim light */
+  --liquid-tint: rgba(255, 255, 255, 0.055);
+  --liquid-tint-strong: rgba(255, 255, 255, 0.085);
+  --liquid-border: rgba(255, 255, 255, 0.11);
+  --liquid-border-strong: rgba(255, 255, 255, 0.16);
+  --liquid-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  --liquid-rim: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --liquid-frost: rgba(255, 255, 255, 0.04);
 }
 
-/* Panel besar: sidebar, topbar, bottom nav, modal */
-.glass-panel {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
-  --glass-blur: blur(24px) saturate(160%);
+/* ───────────────── Quality tiers: mirror GlassQuality ───────────────── */
+.liquid-quality-premium {
+  --liquid-blur: 28;
+  --liquid-saturate: 170%;
+  --liquid-specular: 1.35;
+}
+.liquid-quality-standard {
+  --liquid-blur: 20;
+  --liquid-saturate: 150%;
+  --liquid-specular: 1;
+}
+.liquid-quality-minimal {
+  --liquid-blur: 10;
+  --liquid-saturate: 120%;
+  --liquid-specular: 0.55;
+}
+
+/* ───────────────── Liquid surface base (dipakai semua varian) ───────────────── */
+.liquid-surface {
+  position: relative;
+  border-radius: var(--liquid-radius-card);
+  border: 1px solid var(--liquid-border);
+  box-shadow: var(--liquid-highlight), var(--liquid-rim), 0 12px 36px -10px rgba(2, 6, 23, 0.55);
+  overflow: hidden;
+  /* isolation supaya backdrop group tidak bocor ke sibling */
+  isolation: isolate;
+}
+
+/* Specular rim: highlight atas + sheen diagonal halus (padanan LiquidGlassSettings.specularSharpness) */
+.liquid-surface::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: calc(0.55 * var(--liquid-specular));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, transparent 42%),
+    linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.06) 48%, transparent 62%);
+}
+
+/* Frost subtle di tengah — iOS 27 material feel */
+.liquid-surface::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: calc(var(--liquid-radius-card) - 1px);
+  pointer-events: none;
+  opacity: 0.45;
+  background: radial-gradient(120% 90% at 50% 0%, var(--liquid-frost) 0%, transparent 55%);
+}
+
+/* Disable double-refraction: anak liquid-surface yang nested dikelola sebagai platter */
+.liquid-surface .liquid-surface {
+  --liquid-blur: 14;
+  --liquid-specular: 0.7;
+}
+
+/* ───────────────── Varian nav chrome (GlassScaffold / GlassAppBar / GlassTabBar) ───────────────── */
+.liquid-nav {
+  border-radius: var(--liquid-radius-panel);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.035) 100%);
+  --glass-blur: blur(calc(var(--liquid-blur) * 1px + 6px)) saturate(var(--liquid-saturate));
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  box-shadow: var(--glass-highlight), 0 8px 32px 0 rgba(2, 6, 23, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04),
+    0 8px 32px rgba(2, 6, 23, 0.45),
+    0 1px 3px rgba(2, 6, 23, 0.35);
+}
+/* Pill tab bar feel — iOS bottom bar capsule */
+.liquid-pill {
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
-/* Kartu konten */
-.glass-card {
-  background: linear-gradient(145deg, var(--glass-tint-strong) 0%, rgba(255, 255, 255, 0.035) 100%);
-  --glass-blur: blur(20px) saturate(150%);
+/* ───────────────── Varian content: GlassCard / GlassContainer ───────────────── */
+.glass-card,
+.liquid-card {
+  background: linear-gradient(165deg, var(--liquid-tint-strong) 0%, rgba(255, 255, 255, 0.03) 100%);
+  --glass-blur: blur(calc(var(--liquid-blur) * 1px)) saturate(var(--liquid-saturate));
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-highlight), 0 10px 30px -8px rgba(2, 6, 23, 0.55);
+  border: 1px solid var(--liquid-border);
+  border-radius: var(--liquid-radius-card);
+  box-shadow: var(--liquid-highlight), var(--liquid-rim), 0 12px 36px -10px rgba(2, 6, 23, 0.5);
 }
 
-.glass-card:hover {
-  border-color: rgba(103, 232, 249, 0.32);
-  box-shadow: var(--glass-highlight), 0 14px 36px -8px rgba(6, 182, 212, 0.22);
+.glass-card:hover,
+.liquid-card:hover {
+  border-color: var(--liquid-border-strong);
+  box-shadow: var(--liquid-highlight), var(--liquid-rim), 0 16px 40px -10px rgba(6, 182, 212, 0.18);
 }
 
-/* Bidang di dalam kartu (baris info, header tabel, toggle): kaca lebih tipis, tanpa blur ganda */
-.glass-subtle {
-  background: rgba(255, 255, 255, 0.045);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.glass-input {
-  background: rgba(255, 255, 255, 0.05);
-  --glass-blur: blur(10px);
+/* Hero premium — static hero surface, padanan GlassQuality.premium */
+.liquid-hero {
+  --liquid-blur: 28;
+  --liquid-saturate: 170%;
+  --liquid-specular: 1.35;
+  background:
+    radial-gradient(90% 70% at 15% 0%, rgba(103, 232, 249, 0.16) 0%, transparent 55%),
+    radial-gradient(80% 60% at 90% 100%, rgba(99, 102, 241, 0.14) 0%, transparent 60%),
+    linear-gradient(165deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.04) 100%);
+  --glass-blur: blur(calc(var(--liquid-blur) * 1px)) saturate(var(--liquid-saturate));
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
   border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: calc(var(--liquid-radius-card) + 2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 16px 44px -12px rgba(2, 6, 23, 0.6),
+    0 0 0 1px rgba(103, 232, 249, 0.08);
+}
+
+/* Field: GlassTextField feel — tracking GlassInput tapi liquid */
+.glass-input,
+.liquid-field {
+  background: rgba(255, 255, 255, 0.05);
+  --glass-blur: blur(12px);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 14px;
   color: #f8fafc;
   transition: all 0.2s ease;
 }
 
-.glass-input:focus {
+.glass-input:focus,
+.liquid-field:focus,
+.liquid-field:focus-within {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(103, 232, 249, 0.6);
-  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.18);
+  border-color: rgba(103, 232, 249, 0.55);
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.10);
   outline: none;
 }
 
-/* Pilihan dropdown native tidak bisa transparan: tetap gelap supaya terbaca */
-.glass-input option {
+.glass-input option,
+.liquid-field option {
   background: #0f172a;
   color: #f8fafc;
 }
 
-/* Lapisan gelap di belakang modal: tetap memperlihatkan warna latar yang diburamkan */
-.glass-overlay {
-  background: rgba(3, 7, 18, 0.45);
-  --glass-blur: blur(8px) saturate(120%);
+/* Subtle inner — list tile grouping, padanan GlassGroupedSection */
+.glass-subtle,
+.liquid-subtle {
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  --glass-blur: blur(10px);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
 }
 
-/* Kotak modal: kaca lebih pekat dari kartu supaya form tetap mudah dibaca */
-.glass-modal {
-  background: linear-gradient(145deg, rgba(30, 41, 59, 0.72) 0%, rgba(15, 23, 42, 0.62) 100%);
-  --glass-blur: blur(28px) saturate(170%);
+/* Panel besar legacy -> arahkan ke liquid-nav (backward compat) */
+.glass-panel {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+  --glass-blur: blur(calc(var(--liquid-blur) * 1px + 4px)) saturate(var(--liquid-saturate));
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: var(--glass-highlight), 0 24px 60px -12px rgba(2, 6, 23, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: var(--liquid-radius-panel);
+  box-shadow: var(--liquid-highlight), 0 8px 32px 0 rgba(2, 6, 23, 0.45);
 }
 
-/* Browser tanpa backdrop-filter: kaca dibuat lebih pekat supaya teks tetap terbaca */
+/* ───────────────── Overlay / Modal — GlassDialog / GlassModalSheet ───────────────── */
+.glass-overlay,
+.liquid-overlay {
+  background: rgba(3, 7, 18, 0.42);
+  --glass-blur: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+.glass-modal,
+.liquid-modal {
+  background: linear-gradient(165deg, rgba(30, 41, 59, 0.78) 0%, rgba(15, 23, 42, 0.68) 100%);
+  --glass-blur: blur(30px) saturate(170%);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 24px;
+  box-shadow: var(--liquid-highlight), var(--liquid-rim), 0 24px 60px -12px rgba(2, 6, 23, 0.7);
+}
+
+/* Backdrop group — kurangi fill-rate di chrome group, padanan GlassBackdropGroup */
+.liquid-backdrop-group {
+  isolation: isolate;
+}
+
+/* ───────────────── Fallbacks ───────────────── */
 @supports not (backdrop-filter: blur(1px)) {
-  .glass-panel { background: rgba(15, 23, 42, 0.88); }
-  .glass-card { background: rgba(30, 41, 59, 0.85); }
-  .glass-input { background: rgba(15, 23, 42, 0.85); }
-  .glass-overlay { background: rgba(3, 7, 18, 0.8); }
-  .glass-modal { background: rgba(15, 23, 42, 0.95); }
+  .glass-panel, .liquid-nav { background: rgba(15, 23, 42, 0.90); }
+  .glass-card, .liquid-card, .liquid-hero { background: rgba(30, 41, 59, 0.88); }
+  .glass-input, .liquid-field { background: rgba(15, 23, 42, 0.88); }
+  .glass-overlay, .liquid-overlay { background: rgba(3, 7, 18, 0.82); }
+  .glass-modal, .liquid-modal { background: rgba(15, 23, 42, 0.96); }
+  .liquid-surface::before, .liquid-surface::after { display: none; }
+}
+
+/* High contrast / reduce transparency — padanan GlassAccessibilityScope (Increase Contrast) */
+@media (prefers-contrast: more) {
+  .glass-card, .liquid-card, .liquid-hero, .liquid-nav, .glass-panel {
+    background: rgba(15, 23, 42, 0.92) !important;
+    --glass-blur: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+  }
+  .liquid-surface::before, .liquid-surface::after { opacity: 0 !important; }
 }
 
 /* Custom Scrollbar */
@@ -382,11 +527,24 @@ body::after {
   100% { opacity: 0; transform: translate3d(var(--geser), 105vh, 0) rotate(var(--putar)); }
 }
 
+/* Liquid jelly — iOS 26 physics: scale spring pada interaksi kaca */
+@keyframes liquid-jelly {
+  0% { transform: scale(0.96); }
+  35% { transform: scale(1.02); }
+  65% { transform: scale(0.99); }
+  100% { transform: scale(1); }
+}
+.liquid-jelly:active {
+  animation: liquid-jelly 0.45s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rayakan, .rayakan-kartu, .rayakan-lingkar, .rayakan-label, .rayakan-judul,
   .rayakan-nominal, .rayakan-ket, .rayakan-tombol { animation: none; opacity: 1; transform: none; }
   .rayakan-lingkar path { animation: none; stroke-dashoffset: 0; }
   .rayakan-riak, .rayakan-kilau, .rayakan-hujan { display: none; }
+  .liquid-jelly:active { animation: none; }
+  .liquid-card, .liquid-hero, .liquid-nav, .liquid-surface { transition: none !important; }
 }
 
 /* Animasi pemindaian struk (halaman Scan) selama Gemini membaca gambar */

@@ -19,7 +19,7 @@ export function Topbar({ title, userName }: TopbarProps) {
   const [greeting, today] = waktu ? waktu.split('|') : ['Halo', ''];
 
   return (
-    <header style={{ viewTransitionName: 'qfine-topbar' }} className="sticky top-0 z-30 flex items-center justify-between h-[calc(5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] px-4 sm:px-8 glass-panel border-b border-white/10 backdrop-blur-xl">
+    <header style={{ viewTransitionName: 'qfine-topbar' }} className="liquid-backdrop-group sticky top-0 z-30 flex items-center justify-between h-[calc(5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] px-4 sm:px-8 liquid-nav liquid-quality-premium border-b border-white/10">
       <div className="flex items-center gap-4">
 
         <div>

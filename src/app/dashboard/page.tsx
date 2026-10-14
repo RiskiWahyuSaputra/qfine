@@ -116,8 +116,8 @@ export default function DashboardPage() {
   return (
     <AppShell title="Dashboard">
       <div className="space-y-5 sm:space-y-6">
-        {/* Quick actions — ringan, bukan kartu berat */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl glass-subtle px-3.5 py-3 sm:px-4">
+        {/* Quick actions — toolbar liquid minimal, bukan kartu berat */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl liquid-subtle liquid-quality-minimal px-3.5 py-3 sm:px-4">
           <p className="text-[11px] font-semibold tracking-widest uppercase text-slate-400">
             Aksi cepat
           </p>

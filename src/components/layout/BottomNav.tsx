@@ -26,8 +26,8 @@ export function BottomNav() {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pointer-events-none" style={{ viewTransitionName: 'qfine-bottomnav' }}>
-      <div className="pointer-events-auto max-w-md mx-auto rounded-2xl glass-panel border border-white/10 px-3 py-2 flex items-center justify-around shadow-2xl">
+    <div className="liquid-backdrop-group fixed bottom-0 left-0 right-0 z-40 lg:hidden px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pointer-events-none" style={{ viewTransitionName: 'qfine-bottomnav' }}>
+      <div className="pointer-events-auto max-w-md mx-auto rounded-[22px] liquid-nav liquid-quality-premium liquid-pill border border-white/10 px-3 py-2 flex items-center justify-around shadow-2xl">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;

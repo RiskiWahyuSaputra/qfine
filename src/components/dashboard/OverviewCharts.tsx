@@ -44,7 +44,7 @@ type GlassTooltipProps = {
 function GlassTooltip({ active, payload, label }: GlassTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="glass-panel p-3 rounded-xl border border-white/10 shadow-xl text-xs space-y-1">
+    <div className="liquid-card p-3 rounded-xl border border-white/10 shadow-xl text-xs space-y-1">
       <p className="font-semibold text-white">{label}</p>
       {payload.map((entry, index) => (
         <p key={index} style={{ color: entry.color }} className="font-medium">
@@ -63,8 +63,8 @@ export function OverviewCharts({ monthlyData, categoryExpenseData }: OverviewCha
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
-      {/* Monthly Bar Chart (Span 2) */}
-      <Card className="lg:col-span-2">
+      {/* Monthly Bar Chart (Span 2) — standard for scrollable content */}
+      <Card className="liquid-quality-standard lg:col-span-2">
         <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
           <CardTitle className="text-base">Tren Pemasukan & Pengeluaran</CardTitle>
           <span className="shrink-0 text-xs px-2.5 py-1 rounded-full bg-white/[0.06] border border-white/10 text-slate-300">
@@ -101,8 +101,8 @@ export function OverviewCharts({ monthlyData, categoryExpenseData }: OverviewCha
         </div>
       </Card>
 
-      {/* Category Pie Chart (Span 1) */}
-      <Card className="flex flex-col">
+      {/* Category Pie Chart (Span 1) — standard */}
+      <Card className="liquid-quality-standard flex flex-col">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Pengeluaran per Kategori</CardTitle>
           <p className="text-xs text-slate-400">Distribusi pengeluaran bulan ini</p>

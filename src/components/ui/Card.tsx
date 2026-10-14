@@ -6,11 +6,13 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export function Card({ className, glass = true, children, ...props }: CardProps) {
+  // Mapping ke Liquid Glass: glass=true -> liquid-card (standard), false -> liquid-subtle
+  // iOS rule "glass is a platter": jangan nest liquid glass di dalam liquid glass secara refraktif
   return (
     <div
       className={cn(
-        'rounded-2xl p-5 md:p-6 transition-all duration-200',
-        glass ? 'glass-card' : 'glass-subtle',
+        'p-5 md:p-6 transition-all duration-200',
+        glass ? 'liquid-card liquid-quality-standard rounded-[22px]' : 'liquid-subtle rounded-2xl',
         className
       )}
       {...props}
