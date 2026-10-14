@@ -22,18 +22,19 @@ export function calculateFinancialSummary(
   let monthIncome = 0;
   let monthExpense = 0;
 
+  const hasTarget = targetMonth != null && targetYear != null;
   for (const t of transactions) {
     const amount = Number(t.amount) || 0;
     const [y, m] = t.transaction_date.split('-').map(Number);
 
     if (t.type === 'income') {
       totalIncome += amount;
-      if (targetMonth && targetYear && y === targetYear && m === targetMonth) {
+      if (hasTarget && y === targetYear && m === targetMonth) {
         monthIncome += amount;
       }
     } else if (t.type === 'expense') {
       totalExpense += amount;
-      if (targetMonth && targetYear && y === targetYear && m === targetMonth) {
+      if (hasTarget && y === targetYear && m === targetMonth) {
         monthExpense += amount;
       }
     }
@@ -63,7 +64,7 @@ export function filterTransactionsByPeriod(
 ): Transaction[] {
   if (period === 'all') return transactions;
 
-  const ref = referenceDate ? new Date(referenceDate) : new Date(2026, 9, 9);
+  const ref = referenceDate ? new Date(referenceDate) : new Date();
   const currentYear = ref.getFullYear();
   const currentMonth = ref.getMonth(); // 0-indexed
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { SummaryCards } from '@/components/dashboard/SummaryCards';
 import { OverviewCharts } from '@/components/dashboard/OverviewCharts';
@@ -11,13 +11,13 @@ import { DashboardSkeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
 import { Transaction, Category, Profile } from '@/types/database';
 import { calculateFinancialSummary } from '@/lib/calculations';
-import { Plus, Sparkles, TrendingUp } from 'lucide-react';
+import { Plus, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DashboardPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -56,86 +56,85 @@ export default function DashboardPage() {
   const currentMonth = currentDate.getMonth() + 1;
   const currentYear = currentDate.getFullYear();
 
-  // Summary calculations
-  const summary = calculateFinancialSummary(
-    transactions,
-    0, // Starting balance fallback
-    currentMonth,
-    currentYear
+  const startingBalance = Number(profile?.starting_balance) || 0;
+
+  const summary = useMemo(
+    () => calculateFinancialSummary(transactions, startingBalance, currentMonth, currentYear),
+    [transactions, startingBalance, currentMonth, currentYear]
   );
 
-  // Month-by-month income & expense for last 6 months
-  const monthlyData: { monthName: string; income: number; expense: number }[] = [];
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(currentYear, currentMonth - 1 - i, 1);
-    const m = d.getMonth() + 1;
-    const y = d.getFullYear();
-    const monthName = d.toLocaleDateString('id-ID', { month: 'short' });
+  const monthlyData: { monthName: string; income: number; expense: number }[] = useMemo(() => {
+    const data: { monthName: string; income: number; expense: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(currentYear, currentMonth - 1 - i, 1);
+      const m = d.getMonth() + 1;
+      const y = d.getFullYear();
+      const monthName = d.toLocaleDateString('id-ID', { month: 'short' });
+      let income = 0;
+      let expense = 0;
+      for (const t of transactions) {
+        const [ty, tm] = t.transaction_date.split('-').map(Number);
+        if (ty === y && tm === m) {
+          if (t.type === 'income') income += Number(t.amount) || 0;
+          if (t.type === 'expense') expense += Number(t.amount) || 0;
+        }
+      }
+      data.push({ monthName, income, expense });
+    }
+    return data;
+  }, [transactions, currentMonth, currentYear]);
 
-    let income = 0;
-    let expense = 0;
+  const expenseChangePercent = useMemo(() => {
+    if (monthlyData.length < 2) return null;
+    const cur = monthlyData[monthlyData.length - 1]?.expense ?? 0;
+    const prev = monthlyData[monthlyData.length - 2]?.expense ?? 0;
+    if (prev === 0) return cur === 0 ? 0 : null;
+    return ((cur - prev) / prev) * 100;
+  }, [monthlyData]);
 
+  const categoryExpenseData = useMemo(() => {
+    const categoryMap = new Map<string, { value: number; color: string }>();
     for (const t of transactions) {
       const [ty, tm] = t.transaction_date.split('-').map(Number);
-      if (ty === y && tm === m) {
-        if (t.type === 'income') income += Number(t.amount) || 0;
-        if (t.type === 'expense') expense += Number(t.amount) || 0;
+      if (t.type === 'expense' && ty === currentYear && tm === currentMonth) {
+        const catName = t.category?.name || 'Lainnya';
+        const catColor = t.category?.color || '#0284c7';
+        const currentVal = categoryMap.get(catName)?.value || 0;
+        categoryMap.set(catName, {
+          value: currentVal + (Number(t.amount) || 0),
+          color: catColor,
+        });
       }
     }
-
-    monthlyData.push({ monthName, income, expense });
-  }
-
-  // Current month category expense breakdown
-  const categoryMap = new Map<string, { value: number; color: string }>();
-  for (const t of transactions) {
-    const [ty, tm] = t.transaction_date.split('-').map(Number);
-    if (t.type === 'expense' && ty === currentYear && tm === currentMonth) {
-      const catName = t.category?.name || 'Lainnya';
-      const catColor = t.category?.color || '#0284c7';
-      const currentVal = categoryMap.get(catName)?.value || 0;
-      categoryMap.set(catName, {
-        value: currentVal + (Number(t.amount) || 0),
-        color: catColor,
-      });
-    }
-  }
-
-  const categoryExpenseData = Array.from(categoryMap.entries()).map(([name, data]) => ({
-    name,
-    value: data.value,
-    color: data.color,
-  }));
+    return Array.from(categoryMap.entries()).map(([name, data]) => ({
+      name,
+      value: data.value,
+      color: data.color,
+    }));
+  }, [transactions, currentMonth, currentYear]);
 
   return (
     <AppShell title="Dashboard">
-      <div className="space-y-6">
-        {/* Top Quick Actions Bar */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glass-panel p-4 rounded-2xl border border-white/10">
-          <div>
-            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-cyan-400" />
-              <span>Aksi Cepat Keuangan</span>
-            </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Catat transaksi baru secara manual atau gunakan AI Vision Scanner
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2.5 w-full sm:w-auto">
+      <div className="space-y-5 sm:space-y-6">
+        {/* Quick actions — ringan, bukan kartu berat */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl glass-subtle px-3.5 py-3 sm:px-4">
+          <p className="text-[11px] font-semibold tracking-widest uppercase text-slate-400">
+            Aksi cepat
+          </p>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button
-              variant="secondary"
+              variant="ghost"
               size="sm"
               onClick={() => setIsModalOpen(true)}
-              className="flex-1 sm:flex-initial"
+              className="gap-1.5 border border-white/10 hover:border-white/15 hover:bg-white/[0.06] sm:w-auto flex-1 sm:flex-initial justify-center"
             >
-              <Plus className="w-4 h-4 mr-1 text-cyan-400" />
-              <span>Tambah Transaksi</span>
+              <Plus className="w-4 h-4 text-cyan-300" />
+              <span className="hidden xs:inline">Tambah</span>
+              <span className="xs:hidden">Tambah Transaksi</span>
             </Button>
-
             <Link href="/scan" className="flex-1 sm:flex-initial">
-              <Button variant="primary" size="sm" className="w-full">
-                <Sparkles className="w-4 h-4 mr-1.5" />
+              <Button variant="primary" size="sm" className="w-full gap-1.5">
+                <Sparkles className="w-4 h-4" />
                 <span>Scan Struk AI</span>
               </Button>
             </Link>
@@ -145,8 +144,8 @@ export default function DashboardPage() {
         {isLoading ? (
           <DashboardSkeleton />
         ) : (
-          <>
-            {/* 4 Summary Cards */}
+          <div className="flex flex-col gap-5 sm:gap-6">
+            {/* Hero saldo + ringkasan jadi prioritas visual */}
             <SummaryCards
               currentBalance={summary.currentBalance}
               totalIncomeMonth={
@@ -156,20 +155,23 @@ export default function DashboardPage() {
                 monthlyData.length > 0 ? monthlyData[monthlyData.length - 1].expense : 0
               }
               netSavingsMonth={summary.netSavingsThisMonth}
+              expenseChangePercent={expenseChangePercent}
             />
 
-            {/* Charts Section */}
-            <OverviewCharts
-              monthlyData={monthlyData}
-              categoryExpenseData={categoryExpenseData}
-            />
-
-            {/* Recent Transactions List */}
-            <RecentTransactions
-              transactions={transactions.slice(0, 10)}
-              onAddClick={() => setIsModalOpen(true)}
-            />
-          </>
+            {/* Mobile: transaksi dulu (lebih actionable), desktop: chart dulu */}
+            <div className="order-2 sm:contents">
+              <OverviewCharts
+                monthlyData={monthlyData}
+                categoryExpenseData={categoryExpenseData}
+              />
+            </div>
+            <div className="order-1 sm:order-none">
+              <RecentTransactions
+                transactions={transactions.slice(0, 10)}
+                onAddClick={() => setIsModalOpen(true)}
+              />
+            </div>
+          </div>
         )}
       </div>
 

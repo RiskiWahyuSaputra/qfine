@@ -1,8 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { formatIDR } from '@/lib/utils';
+import { BarChart3, PieChart as PieIcon } from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -34,51 +36,65 @@ interface OverviewChartsProps {
   categoryExpenseData: CategoryPieData[];
 }
 
+type GlassTooltipProps = {
+  active?: boolean;
+  payload?: Array<{ color?: string; name?: string; value?: number | string }>;
+  label?: string;
+};
+function GlassTooltip({ active, payload, label }: GlassTooltipProps) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="glass-panel p-3 rounded-xl border border-white/10 shadow-xl text-xs space-y-1">
+      <p className="font-semibold text-white">{label}</p>
+      {payload.map((entry, index) => (
+        <p key={index} style={{ color: entry.color }} className="font-medium">
+          {entry.name}: {formatIDR(Number(entry.value) || 0)}
+        </p>
+      ))}
+    </div>
+  );
+}
+
 export function OverviewCharts({ monthlyData, categoryExpenseData }: OverviewChartsProps) {
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="glass-panel p-3 rounded-xl border border-white/10 shadow-xl text-xs space-y-1">
-          <p className="font-semibold text-white">{label}</p>
-          {payload.map((entry: any, index: number) => (
-            <p key={index} style={{ color: entry.color }} className="font-medium">
-              {entry.name}: {formatIDR(entry.value)}
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
+  const totalExpenseMonth = useMemo(
+    () => categoryExpenseData.reduce((s, d) => s + (Number(d.value) || 0), 0),
+    [categoryExpenseData]
+  );
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
       {/* Monthly Bar Chart (Span 2) */}
       <Card className="lg:col-span-2">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
           <CardTitle className="text-base">Tren Pemasukan & Pengeluaran</CardTitle>
-          <span className="text-xs text-slate-400">6 Bulan Terakhir</span>
+          <span className="shrink-0 text-xs px-2.5 py-1 rounded-full bg-white/[0.06] border border-white/10 text-slate-300">
+            6 Bulan Terakhir
+          </span>
         </CardHeader>
-        <div className="h-72 w-full pt-4">
-          {monthlyData.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-xs text-slate-500">
-              Belum ada riwayat transaksi bulanan
-            </div>
+        <div className="h-64 sm:h-72 w-full pt-2 sm:pt-4">
+          {monthlyData.length === 0 || monthlyData.every((d) => d.income === 0 && d.expense === 0) ? (
+            <EmptyState
+              icon={<BarChart3 className="w-6 h-6" />}
+              title="Belum ada tren bulanan"
+              description="Transaksi 6 bulan terakhir akan tampil di sini setelah ada pemasukan atau pengeluaran."
+            />
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <XAxis dataKey="monthName" stroke="#64748b" fontSize={11} tickLine={false} />
+              <BarChart data={monthlyData} margin={{ top: 10, right: 8, left: -16, bottom: 0 }} barGap={6}>
+                <XAxis dataKey="monthName" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} interval={0} />
                 <YAxis
-                  stroke="#64748b"
+                  stroke="#94a3b8"
                   fontSize={10}
                   tickLine={false}
+                  axisLine={false}
                   tickFormatter={(val) =>
-                    val >= 1000000 ? `${(val / 1000000).toFixed(0)}Jt` : `${val / 1000}k`
+                    val >= 1_000_000 ? `${(val / 1_000_000).toFixed(val % 1_000_000 === 0 ? 0 : 1)}Jt` : `${Math.round(val / 1000)}k`
                   }
+                  width={44}
                 />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="income" name="Pemasukan" fill="#10b981" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="expense" name="Pengeluaran" fill="#f43f5e" radius={[6, 6, 0, 0]} />
+                <Tooltip content={<GlassTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+                <Bar dataKey="income" name="Pemasukan" fill="#10b981" radius={[8, 8, 0, 0]} barSize={18} />
+                <Bar dataKey="expense" name="Pengeluaran" fill="#f43f5e" radius={[8, 8, 0, 0]} barSize={18} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -86,47 +102,54 @@ export function OverviewCharts({ monthlyData, categoryExpenseData }: OverviewCha
       </Card>
 
       {/* Category Pie Chart (Span 1) */}
-      <Card>
+      <Card className="flex flex-col">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Pengeluaran per Kategori</CardTitle>
           <p className="text-xs text-slate-400">Distribusi pengeluaran bulan ini</p>
         </CardHeader>
-        <div className="h-72 w-full flex items-center justify-center">
+        <div className="h-64 sm:h-72 w-full flex items-center justify-center">
           {categoryExpenseData.length === 0 ? (
-            <div className="text-xs text-slate-500 text-center px-4">
-              Belum ada data pengeluaran kategori bulan ini
-            </div>
+            <EmptyState
+              icon={<PieIcon className="w-6 h-6" />}
+              title="Belum ada pengeluaran"
+              description="Kategori terisi otomatis saat ada transaksi pengeluaran di bulan ini."
+            />
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={categoryExpenseData}
                   cx="50%"
-                  cy="45%"
-                  innerRadius={55}
-                  outerRadius={80}
-                  paddingAngle={4}
+                  cy="44%"
+                  innerRadius={60}
+                  outerRadius={85}
+                  paddingAngle={3}
                   dataKey="value"
                 >
                   {categoryExpenseData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color || '#06b6d4'} />
+                    <Cell key={`cell-${index}`} fill={entry.color || '#06b6d4'} stroke="rgba(15,23,42,0.9)" strokeWidth={1.5} />
                   ))}
                 </Pie>
+                {/* Center total */}
+                <text x="50%" y="44%" textAnchor="middle" dominantBaseline="central" className="fill-white text-[11px] font-semibold">
+                  <tspan x="50%" dy="-0.6em" className="fill-slate-400 text-[10px] tracking-wide uppercase">
+                    Total bulan ini
+                  </tspan>
+                  <tspan x="50%" dy="1.35em" className="fill-white text-[11px] font-bold">
+                    {formatIDR(totalExpenseMonth)}
+                  </tspan>
+                </text>
                 <Tooltip
-                  formatter={(value: any) => [formatIDR(Number(value) || 0), 'Total']}
-                  contentStyle={{
-                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                    borderRadius: '0.75rem',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    fontSize: '12px',
-                  }}
+                  content={<GlassTooltip label="Kategori" />}
+                  formatter={(value: unknown) => [formatIDR(Number(value) || 0), 'Total']}
                 />
                 <Legend
                   verticalAlign="bottom"
                   height={36}
                   iconType="circle"
                   iconSize={8}
-                  wrapperStyle={{ fontSize: '11px', color: '#94a3b8' }}
+                  wrapperStyle={{ fontSize: '11px', color: '#94a3b8', paddingTop: 8 }}
+                  formatter={(value: string) => (value.length > 12 ? `${value.slice(0, 12)}…` : value)}
                 />
               </PieChart>
             </ResponsiveContainer>
